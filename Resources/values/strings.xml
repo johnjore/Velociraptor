@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">Velociraptor</string>
+    <string name="str_current_location">GPS Information</string>
+    <string name="str_longitude">Longitude</string>
+    <string name="str_latitude">Latitude</string>
+    <string name="str_street_information">Street Information</string>
+    <string name="str_street_name">Street name</string>
+    <string name="str_street_maxspeed">Speed limit (km/h)</string>
+    <string name="str_na">N/A</string>
+    <string name="str_speed">Speed</string>
+    <string name="str_speeding">Speeding</string>
+    <string name="str_kmh">km/h</string>
+</resources>
