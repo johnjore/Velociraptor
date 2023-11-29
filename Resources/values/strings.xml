@@ -10,4 +10,8 @@
     <string name="str_speed">Speed</string>
     <string name="str_speeding">Speeding</string>
     <string name="str_kmh">km/h</string>
+    <string name="ExitTitle">Confirm Exit</string>
+    <string name="ExitPrompt">Are you sure you want to exit?</string>
+    <string name="Yes">Yes</string>
+    <string name="No">No</string>
 </resources>

@@ -11,34 +11,41 @@ using Itinero.Attributes;
 using Itinero.LocalGeo;
 using Xamarin.Essentials;
 using Serilog;
+using Android.Content.PM;
+using Android.Content;
+using AndroidX.Core.View;
 
 namespace Velociraptor
 {
     [Activity(Label = "@string/app_name", MainLauncher = true)]
-    public class MainActivity : Activity, ILocationListener
+    public class MainActivity : Activity
     {
+        /**///Todo:
+        //Fix / request permissions at runtime
+        //Create menu option to download PBF and convert to routerdb format
+        //Create menu option to select which routerdb to use
+        //Start service after reboot
+        //Implement logging
+
         // Debugging
-        public string? TAG { get; private set; }
+        public static string? TAG { get; private set; }
         private const bool Debug = true;
 
         // GUI
-        TextView? txtlatitude = null;
-        TextView? txtlong = null;
-        TextView? txtspeed = null;
-        TextView? txtstreetname = null;
-        TextView? txtspeedlimit = null;
-        TextView? txtspeeding = null;
-        Android.Locations.Location? currentLocation = null;
-        LocationManager? locationManager = null;
-        string locationProvider = string.Empty;
+        public static TextView? txtlatitude = null;
+        public static TextView? txtlong = null;
+        public static TextView? txtspeed = null;
+        public static TextView? txtstreetname = null;
+        public static TextView? txtspeedlimit = null;
+        public static TextView? txtspeeding = null;
 
         //OSM Data
-        Itinero.RouterDb routerDb = new();
-        Itinero.Router? router = null;
-        Itinero.Profiles.Profile? profile = null;
+        public static Itinero.RouterDb routerDb = new();
+        public static Itinero.Router? router = null;
+        public static Itinero.Profiles.Profile? profile = null;
 
         //Misc
-        private static Activity? mContext;
+        public static Activity? mContext;
         /*
         readonly string[] permissions =
         {
@@ -48,102 +55,6 @@ namespace Velociraptor
             Android.Manifest.Permission.ControlLocationUpdates,
             Android.Manifest.Permission.Internet,            
         };*/
-
-        public void OnLocationChanged(Android.Locations.Location location)
-        {
-            currentLocation = location;
-
-            if ((txtlatitude is null) || (txtlong is null) || (txtspeed is null) || (txtstreetname is null) || (txtspeedlimit is null) || (txtspeeding is null))
-                return;
-
-            if (Resources is null)
-                return;
-
-            if (currentLocation == null)
-            {
-                txtlatitude.Text = Resources.GetString(Resource.String.str_na);
-                txtlong.Text = Resources.GetString(Resource.String.str_na);
-                txtspeed.Text = Resources.GetString(Resource.String.str_na);
-                txtstreetname.Text = Resources.GetString(Resource.String.str_na);
-                txtspeedlimit.Text = Resources.GetString(Resource.String.str_na);
-                txtspeeding.Text = Resources.GetString(Resource.String.str_na);
-            
-                return;
-            }
-
-            //Update GUI with GPS Information
-            txtlatitude.Text = currentLocation.Latitude.ToString();
-            txtlong.Text = currentLocation.Longitude.ToString();
-            
-            //Update GUI with OSM data (streetname and street max speed)
-            string streetspeed = string.Empty;
-            try
-            {
-                RouterPoint routerPoint = router.Resolve(profile, new Coordinate((float)currentLocation.Latitude, (float)currentLocation.Longitude));
-                //RouterPoint routerPoint = router.Resolve(profile, new Coordinate(-37.81277740408493f, 144.88297495235076f));
-                Itinero.Data.Network.RoutingEdge edge = routerDb.Network.GetEdge(routerPoint.EdgeId);
-                IAttributeCollection attributes = routerDb.GetProfileAndMeta(edge.Data.Profile, edge.Data.MetaId);
-
-                attributes.TryGetValue("name", out string streetname);
-                attributes.TryGetValue("maxspeed", out streetspeed);
-
-                txtstreetname.Text = streetname;
-                txtspeedlimit.Text = streetspeed;
-            }
-            catch
-            {
-                txtstreetname.Text = Resources.GetString(Resource.String.str_na);
-                txtspeedlimit.Text = Resources.GetString(Resource.String.str_na);
-                txtspeeding.Text = Resources.GetString(Resource.String.str_na);
-            }
-
-            //GPS Speed?
-            if (location.HasSpeed == false)
-            {
-                txtspeed.Text = Resources.GetString(Resource.String.str_na);
-                txtspeeding.Text = String.Empty;
-                return;
-            }
-
-            //Convert from m/s to km/h
-            int speed_kmh = (int)(location.Speed * 3.6);
-            txtspeed.Text = speed_kmh.ToString() + " " + Resources.GetString(Resource.String.str_kmh);
-
-
-            if (Int32.TryParse(streetspeed, out int streetspeed_int) == false)
-            {
-                txtspeeding.Text = String.Empty;
-                return;
-            }
-
-            //If not speeding, we're done
-            if (speed_kmh < streetspeed_int)
-            {
-                txtspeeding.Text = String.Empty;
-                return;
-            }
-
-            //Update GUI and play notification sound
-            txtspeeding.Text = Resources.GetString(Resource.String.str_speeding);
-            var soundUri = RingtoneManager.GetDefaultUri(RingtoneType.Notification);
-            var r = RingtoneManager.GetRingtone(mContext, soundUri);
-            r?.Play();           
-        }
-
-        public void OnProviderDisabled(string provider)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void OnProviderEnabled(string provider)
-        {
-            throw new NotImplementedException();
-        }
-
-        public void OnStatusChanged(string? provider, [GeneratedEnum] Availability status, Bundle? extras)
-        {
-            throw new NotImplementedException();
-        }
 
         protected override void OnCreate(Bundle? savedInstanceState)
         {
@@ -174,38 +85,49 @@ namespace Velociraptor
 
             mContext = this;
 
-            InitializeLocationManager();
+            //Location Service. Service checks if already running
+            Serilog.Log.Debug($"MainActivity - Start LocationService");
+            Intent locationServiceIntent = new(this, typeof(LocationForegroundService));
+            locationServiceIntent.SetAction(PrefsActivity.ACTION_START_SERVICE);
+            if (Android.OS.Build.VERSION.SdkInt >= Android.OS.BuildVersionCodes.O)
+            {
+                #pragma warning disable CA1416
+                StartForegroundService(locationServiceIntent);
+                #pragma warning restore CA1416
+            }
+            else
+            {
+                StartService(locationServiceIntent);
+            }
+
+            Serilog.Log.Debug($"MainActivity - Initilize OSM Provider");
             InitializeOsmProvider();
         }
 
-        private void InitializeLocationManager()
+        public override void OnBackPressed()
         {
-            locationManager = GetSystemService(LocationService) as LocationManager;
-            if (locationManager == null)
-            {
-                Android.Util.Log.Error(TAG, "locationManager is null");
-                return;
-            }
+            using var alert = new AlertDialog.Builder(mContext);
 
-            Criteria criteriaForLocationService = new()
+            if (mContext is not null && mContext.Resources is not null)
             {
-                Accuracy = Accuracy.Fine,
-                SpeedRequired = true,
-                SpeedAccuracy = Accuracy.Fine
-            };
+                alert.SetTitle(mContext.Resources.GetString(Resource.String.ExitTitle));
+                alert.SetMessage(mContext.Resources.GetString(Resource.String.ExitPrompt));
+                alert.SetPositiveButton(Resource.String.Yes, (sender, args) => {
+                    //Location Service
+                    Intent locationServiceIntent = new(this, typeof(LocationForegroundService));
+                    locationServiceIntent.SetAction(PrefsActivity.ACTION_STOP_SERVICE);
+                    StopService(locationServiceIntent);
 
-            IList<string> acceptableLocationProviders = locationManager.GetProviders(criteriaForLocationService, true);
-            if (acceptableLocationProviders.Any())
-            {
-                locationProvider = acceptableLocationProviders.First();
-            } else {
-                locationProvider = string.Empty;
-            }
+                    mContext.FinishAffinity(); 
+                });
+                alert.SetNegativeButton(Resource.String.No, (sender, args) => { });
 
-            Android.Util.Log.Debug(TAG, "Using " + locationProvider + ".");
+                var dialog = alert.Create();
+                dialog?.Show();
+            }           
         }
 
-        private void InitializeOsmProvider()
+        private static void InitializeOsmProvider()
         {
             Android.Util.Log.Debug(TAG, "InitializeOSMProvider() - Start");
 
@@ -256,26 +178,6 @@ namespace Velociraptor
             router = new Router(routerDb);
 
             Android.Util.Log.Debug(TAG, "InitializeOSMProvider() - End");
-        }
-
-        protected override void OnResume()
-        {
-            base.OnResume();
-            if (locationProvider is not null && locationManager is not null)
-            {
-                locationManager.RequestLocationUpdates(locationProvider, 0, 0, this);
-            }            
-        }
-
-        protected override void OnPause()
-        {
-            base.OnPause();
-            if (locationManager is null)
-            {
-                return;
-            }
-
-            locationManager.RemoveUpdates(this);
         }
 
         public override void OnRequestPermissionsResult(int requestCode, string[] permissions, Android.Content.PM.Permission[] grantResults)
