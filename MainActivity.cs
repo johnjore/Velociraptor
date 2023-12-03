@@ -8,19 +8,15 @@ using System.Collections.Generic;
 using System.Linq;
 using Itinero;
 using Xamarin.Essentials;
+using static Xamarin.Essentials.Permissions;
 using Android.Content;
 using Android.Content.PM;
 using Microsoft.AppCenter;
 using Microsoft.AppCenter.Analytics;
 using Microsoft.AppCenter.Crashes;
-using Microsoft.Extensions.Configuration;
 using Serilog;
-using Serilog.Sink.AppCenter;
-using Android.Views;
 using Serilog.Core;
-using static Android.Renderscripts.Sampler;
-using static Itinero.Route;
-using static Java.Util.Jar.Attributes;
+using Serilog.Sink.AppCenter;
 
 namespace Velociraptor
 {
@@ -47,15 +43,6 @@ namespace Velociraptor
 
         //Misc
         public static Activity? mContext;
-        /*
-        readonly string[] permissions =
-        {
-            Android.Manifest.Permission.AccessNetworkState,
-            Android.Manifest.Permission.AccessFineLocation,
-            Android.Manifest.Permission.AccessBackgroundLocation,
-            Android.Manifest.Permission.ControlLocationUpdates,
-            Android.Manifest.Permission.Internet,            
-        };*/
 
         protected override void OnCreate(Bundle? savedInstanceState)
         {
@@ -65,7 +52,9 @@ namespace Velociraptor
             {
                 return;
             }
-            
+
+            mContext = this;
+
             string appCenterApiKey = Resources.GetString(Resource.String.Microsoft_App_Center_APIKey);
             AppCenter.Start(appCenterApiKey, typeof(Analytics), typeof(Crashes));
 
@@ -76,15 +65,8 @@ namespace Velociraptor
             Xamarin.Essentials.Platform.Init(this, savedInstanceState);
             Serilog.Log.Debug($"MainActivity - OnCreate()");
 
-
-            /*  foreach (Android.Manifest.Permission permission in permissions)
-            {
-                var status = 
-                while (AndroidX.Core.Content.ContextCompat.CheckSelfPermission(this, permission) != (int)Android.Content.PM.Permission.Granted)
-                {
-                    RequestPermissions(new[] { permission }, 42)
-                }
-            }*/
+            //Request Permissions
+            RequestPermission(new LocationAlways());
 
             // Set our view from the "main" layout resource
             SetContentView(Resource.Layout.activity_main);
@@ -97,9 +79,7 @@ namespace Velociraptor
             txtspeedlimit = FindViewById<TextView>(Resource.Id.txtspeedlimit);
             txtgpsdatetime = FindViewById<TextView>(Resource.Id.txtgpsdatetime);
             txtlastupdated = FindViewById<TextView>(Resource.Id.txtlastupdated);
-
-            mContext = this;
-
+            
             //Location Service. Service checks if already running
             Serilog.Log.Debug($"MainActivity - Start LocationService");
             Intent locationServiceIntent = new(this, typeof(LocationForegroundService));
@@ -200,5 +180,31 @@ namespace Velociraptor
             Xamarin.Essentials.Platform.OnRequestPermissionsResult(requestCode, permissions, grantResults);
             base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
         }
+
+        private static PermissionStatus RequestPermission<T>(T permission) where T : BasePermission
+        {
+            PermissionStatus status = PermissionStatus.Unknown;
+
+            try
+            {
+                status = permission.CheckStatusAsync().Result;
+                if (status == PermissionStatus.Denied)
+                {
+                    status = permission.RequestAsync().Result;
+                    if (status == PermissionStatus.Denied && mContext != null)
+                    {
+                        mContext.FinishAffinity();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Crashes.TrackError(ex);
+                Serilog.Log.Error($"Permission not declared? " + ex.ToString());
+            }
+
+            return status;
+        }
+
     }
 }

@@ -28,11 +28,6 @@ namespace Velociraptor
     [Service]
     public class LocationForegroundService : Service, ILocationListener
     {
-
-        //public class StreamingBackgroundService : Service
-        //{
-        //    private MediaPlayer player;
-
         private LocationManager? locationManager = null;
         private string locationProvider = string.Empty;
         private bool isStarted;

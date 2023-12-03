@@ -10,6 +10,8 @@ namespace Velociraptor
     {
         public override void OnReceive(Context context, Intent intent)
         {
+            Serilog.Log.Warning($"BootBroadcastReceiver - OnReceive() Starting");
+
             if (context is null || intent.Action is null)
             {
                 Serilog.Log.Warning($"BootBroadcastReceiver - context or intent.Action is null - returning");
