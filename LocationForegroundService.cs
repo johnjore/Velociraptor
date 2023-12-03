@@ -22,7 +22,6 @@ using Serilog;
 using Serilog.Sink.AppCenter;
 
 
-
 namespace Velociraptor
 {
     [Service]
@@ -116,7 +115,7 @@ namespace Velociraptor
                     if (locationProvider is not null && locationManager is not null)
                     {
                         Serilog.Log.Warning($"ServiceRunning: Creating callback service for LocationUpdates, every 1000ms and 1m");
-                        locationManager.RequestLocationUpdates(locationProvider, 1000, 0, this, Looper.MainLooper); /**/
+                        locationManager.RequestLocationUpdates(locationProvider, 1000, 1, this, Looper.MainLooper); /**/
                     }
                 }
             }
@@ -359,11 +358,14 @@ namespace Velociraptor
             }
 
             //Update GUI and play notification sound
+            /**/
+            /*
             Serilog.Log.Debug($"LocationChangedGUI - Speeding - Update GUI, play a sound and return");
             MainActivity.txtspeeding.Text = Resources.GetString(Resource.String.str_speeding);
             var soundUri1 = RingtoneManager.GetDefaultUri(RingtoneType.Notification);
             var r1 = RingtoneManager.GetRingtone(MainActivity.mContext, soundUri1);
             r1?.Play();
+            */
 
 
             //GPS Speed?
@@ -381,7 +383,7 @@ namespace Velociraptor
 
             //Convert from m/s to km/h
             Serilog.Log.Debug($"LocationChangedGUI - Convert speed from m/s to km/h and update GUI");
-            int speed_kmh = (int)(currentLocation.Speed * 3.6) - 55; /**/
+            int speed_kmh = (int)(currentLocation.Speed * 3.6);
             MainActivity.mContext?.RunOnUiThread(() =>
             {
                 MainActivity.txtspeed.Text = speed_kmh.ToString() + " " + Resources.GetString(Resource.String.str_kmh);
