@@ -10,7 +10,28 @@
     <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
   </PropertyGroup>
   <ItemGroup>
+    <None Remove="Resources\mipmap-hdpi\appicon.png" />
+    <None Remove="Resources\mipmap-hdpi\appicon_foreground.png" />
+    <None Remove="Resources\mipmap-mdpi\appicon.png" />
+    <None Remove="Resources\mipmap-mdpi\appicon_foreground.png" />
+    <None Remove="Resources\mipmap-xhdpi\appicon.png" />
+    <None Remove="Resources\mipmap-xxhdpi\appicon.png" />
+    <None Remove="Resources\mipmap-xxhdpi\appicon_foreground.png" />
+    <None Remove="Resources\mipmap-xxxhdpi\appicon.png" />
+    <None Remove="Resources\mipmap-xxxhdpi\appicon_foreground.png" />
     <None Remove="Resources\values\secrets.xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <AndroidResource Include="Resources\mipmap-hdpi\appicon.png.old" />
+    <AndroidResource Include="Resources\mipmap-hdpi\appicon_foreground.png.old" />
+    <AndroidResource Include="Resources\mipmap-mdpi\appicon.png.old" />
+    <AndroidResource Include="Resources\mipmap-mdpi\appicon_foreground.png.old" />
+    <AndroidResource Include="Resources\mipmap-xhdpi\appicon.png.old" />
+    <AndroidResource Include="Resources\mipmap-xhdpi\appicon_foreground.png.old" />
+    <AndroidResource Include="Resources\mipmap-xxhdpi\appicon.png.old" />
+    <AndroidResource Include="Resources\mipmap-xxhdpi\appicon_foreground.png.old" />
+    <AndroidResource Include="Resources\mipmap-xxxhdpi\appicon.png.old" />
+    <AndroidResource Include="Resources\mipmap-xxxhdpi\appicon_foreground.png.old" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Itinero" Version="1.5.1" />
