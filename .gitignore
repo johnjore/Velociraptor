@@ -1,0 +1,16 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/Velociraptor.sln
+/Velociraptor.csproj.user
+/Resources/drawable/google_downasaur.xml
+/bin/Debug/net7.0-android
+/.vs
+/obj
+/.gitignore
+/hs_err_pid33944.log
+/hs_err_pid17412.log
+/hs_err_pid14480.log
+/secrets.json
+/Resources/values/secrets.xml

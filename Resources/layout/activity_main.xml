@@ -52,7 +52,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/txtspeed"
-        android:layout_marginBottom="80.0dp"/>
+        android:layout_marginBottom="40.0dp"/>
 
     <TextView
         android:text="@string/str_street_information"
@@ -87,6 +87,41 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:id="@+id/txtspeedlimit"
+        android:layout_marginBottom="40.0dp"/>
+
+    <TextView
+        android:text="@string/str_status"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:layout_width="214.5dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:id="@+id/textView8" />
+
+    <TextView
+        android:text="@string/str_GPSDateTime"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/textView9" />
+
+    <TextView
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/txtgpsdatetime" />
+
+    <TextView
+        android:text="@string/str_lastupdated"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/textView10" />
+
+    <TextView
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/txtlastupdated"
         android:layout_marginBottom="80.0dp"/>
 
     <TextView

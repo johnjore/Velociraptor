@@ -11,18 +11,28 @@ using Android.Runtime;
 using Android.Locations;
 using Android.OS;
 using AndroidX.Core.App;
-using AndroidX.LocalBroadcastManager.Content;
 using Android.Media;
 using Itinero.Attributes;
 using Itinero.LocalGeo;
 using Itinero;
-using static Android.Telephony.CarrierConfigManager;
+using Microsoft.AppCenter;
+using Microsoft.AppCenter.Analytics;
+using Microsoft.AppCenter.Crashes;
+using Serilog;
+using Serilog.Sink.AppCenter;
+
+
 
 namespace Velociraptor
 {
     [Service]
     public class LocationForegroundService : Service, ILocationListener
     {
+
+        //public class StreamingBackgroundService : Service
+        //{
+        //    private MediaPlayer player;
+
         private LocationManager? locationManager = null;
         private string locationProvider = string.Empty;
         private bool isStarted;
@@ -47,7 +57,7 @@ namespace Velociraptor
                 
         public void OnLocationChanged(Android.Locations.Location location)
         {
-            Android.Util.Log.Info(MainActivity.TAG, "location changed");
+            Serilog.Log.Debug("location changed");
 
             LocationChangedGUI(location);
         }
@@ -57,7 +67,7 @@ namespace Velociraptor
             locationManager = GetSystemService(LocationService) as LocationManager;
             if (locationManager == null)
             {
-                Android.Util.Log.Error(MainActivity.TAG, "locationManager is null");
+                Serilog.Log.Error("locationManager is null");
                 return;
             }
 
@@ -78,14 +88,14 @@ namespace Velociraptor
                 locationProvider = string.Empty;
             }
 
-            Android.Util.Log.Debug(MainActivity.TAG, "Using " + locationProvider + " as location provider.");
+            Serilog.Log.Debug("Using " + locationProvider + " as location provider.");
         }
 
-        public override StartCommandResult OnStartCommand(Intent intent, StartCommandFlags flags, int startId)
+        public override StartCommandResult OnStartCommand(Intent? intent, StartCommandFlags flags, int startId)
         {
-            if (intent.Action is null)
+            if (intent is null || intent.Action is null)
             {
-                Serilog.Log.Warning($"OnStartCommand: intent.Action is null, returning early");
+                Serilog.Log.Warning($"OnStartCommand: intent or intent.Action is null ");
                 return StartCommandResult.Sticky;
             }
 
@@ -111,7 +121,7 @@ namespace Velociraptor
                     if (locationProvider is not null && locationManager is not null)
                     {
                         Serilog.Log.Warning($"ServiceRunning: Creating callback service for LocationUpdates, every 1000ms and 1m");
-                        locationManager.RequestLocationUpdates(locationProvider, 1000, 1, this, Looper.MainLooper);
+                        locationManager.RequestLocationUpdates(locationProvider, 1000, 0, this, Looper.MainLooper); /**/
                     }
                 }
             }
@@ -140,7 +150,7 @@ namespace Velociraptor
             return StartCommandResult.Sticky;
         }
 
-        public override IBinder? OnBind(Intent intent)
+        public override IBinder? OnBind(Intent? intent)
         {
             // Return null because this is a pure started service. A hybrid service would return a binder that would allow access to the GetFormattedStamp() method.
             return null;
@@ -169,21 +179,27 @@ namespace Velociraptor
                 return;
             }
 
-            NotificationChannel nChannel = new(PrefsActivity.NOTIFICATION_CHANNEL_ID, PrefsActivity.channelName, NotificationImportance.Low)
+            #pragma warning disable CA1416
+            if (Android.OS.Build.VERSION.SdkInt >= Android.OS.BuildVersionCodes.O)
             {
-                LockscreenVisibility = NotificationVisibility.Private,
-            };
+                NotificationChannel nChannel = new(PrefsActivity.NOTIFICATION_CHANNEL_ID, PrefsActivity.channelName, NotificationImportance.Low)
+                {
+                    LockscreenVisibility = NotificationVisibility.Private,
+                };
 
-            nManager = GetSystemService(Android.Content.Context.NotificationService) as NotificationManager;
-            nManager?.CreateNotificationChannel(nChannel);
+                nManager = GetSystemService(Android.Content.Context.NotificationService) as NotificationManager;
+                nManager?.CreateNotificationChannel(nChannel);
+            }
+            #pragma warning restore CA1416
+
+
             NotificationCompat.Builder notificationBuilder = new(this, PrefsActivity.NOTIFICATION_CHANNEL_ID);
                         
-            /**///.SetContentText(Resources.GetString(Resource.String.notification_text))
             Notification notification = notificationBuilder
                 .SetOngoing(true)
-                .SetSmallIcon(Resource.Drawable.track)
-                .SetContentTitle("Streetname")
-                .SetContentText("speedlimit")
+                .SetSmallIcon(Resource.Drawable.dragon)
+                .SetContentTitle("name")
+                .SetContentText("speed")
                 .SetPriority(1)
                 .SetCategory(Notification.CategoryService)
                 .SetContentIntent(BuildIntentToShowMainActivity())
@@ -198,14 +214,14 @@ namespace Velociraptor
         /// user taps on the notification; it will take them to the main activity of the app.
         /// </summary>
         /// <returns>The content intent.</returns>
-        PendingIntent BuildIntentToShowMainActivity()
+        PendingIntent? BuildIntentToShowMainActivity()
         {
             var notificationIntent = new Intent(this, typeof(MainActivity));
             notificationIntent.SetAction(PrefsActivity.ACTION_MAIN_ACTIVITY);
             notificationIntent.SetFlags(ActivityFlags.SingleTop | ActivityFlags.ClearTask);
             notificationIntent.PutExtra(PrefsActivity.SERVICE_STARTED_KEY, true);
 
-            var pendingIntent = PendingIntent.GetActivity(this, 0, notificationIntent, PendingIntentFlags.UpdateCurrent | PendingIntentFlags.Immutable);
+            PendingIntent? pendingIntent = PendingIntent.GetActivity(this, 0, notificationIntent, PendingIntentFlags.UpdateCurrent | PendingIntentFlags.Immutable);
             return pendingIntent;
         }
 
@@ -213,18 +229,17 @@ namespace Velociraptor
         {
             while (isStarted)
             {
-                Serilog.Log.Debug($"LocationService loop is running");
-                Android.Util.Log.Debug(MainActivity.TAG, "LocationService is running: " + (DateTime.Now).ToString("HH:mm:ss"));
+                Serilog.Log.Debug($"LocationService loop is running: " + (DateTime.Now).ToString("HH:mm:ss"));
                 try
                 {
-                    if (Resources is not null)
+                    if (Resources is not null && nManager is not null)
                     {
                         Serilog.Log.Debug($"Update notification");
 
                         NotificationCompat.Builder notificationBuilder = new(this, PrefsActivity.NOTIFICATION_CHANNEL_ID);
                         Notification notification = notificationBuilder
                             .SetOngoing(true)
-                            .SetSmallIcon(Resource.Drawable.track)
+                            .SetSmallIcon(Resource.Drawable.dragon)
                             .SetContentTitle(streetname)
                             .SetContentText(streetspeed + " " + Resources.GetString(Resource.String.str_kmh))
                             .SetPriority(1)
@@ -238,11 +253,10 @@ namespace Velociraptor
                 }
                 catch (Exception ex)
                 {
-                    Serilog.Log.Error($"Crashed. " + ex.ToString());
+                    Serilog.Log.Error($"Crashed: " + ex.ToString());
+                    Crashes.TrackError(ex);
                 }
             }
-
-            
         }
 
         private void LocationChangedGUI(Android.Locations.Location? currentLocation)
@@ -252,7 +266,9 @@ namespace Velociraptor
                 (MainActivity.txtspeed is null) ||
                 (MainActivity.txtstreetname is null) ||
                 (MainActivity.txtspeedlimit is null) ||
-                (MainActivity.txtspeeding is null))
+                (MainActivity.txtspeeding is null) ||
+                (MainActivity.txtgpsdatetime is null) ||
+                (MainActivity.txtlastupdated is null))
             {
                 Serilog.Log.Error($"LocationChangedGUI - One or more TextView objects are null");
                 return;
@@ -275,18 +291,37 @@ namespace Velociraptor
                     MainActivity.txtstreetname.Text = Resources.GetString(Resource.String.str_na);
                     MainActivity.txtspeedlimit.Text = Resources.GetString(Resource.String.str_na);
                     MainActivity.txtspeeding.Text = Resources.GetString(Resource.String.str_na);
+                    MainActivity.txtgpsdatetime.Text = Resources.GetString(Resource.String.str_na);
+                    MainActivity.txtlastupdated.Text = Resources.GetString(Resource.String.str_na);
                 });
 
                 return;
             }
 
             //Update GUI with GPS Information
-            Serilog.Log.Debug($"LocationChangedGUI - Update latitude and longitude TextView fields");
-            MainActivity.mContext?.RunOnUiThread(() =>
+            Serilog.Log.Debug($"LocationChangedGUI - Update GPS related TextView fields");
+
+            //Convert GPS time in ms since epoch in UTC to local datetime
+            DateTime gpslocalDateTime = default;
+            try
             {
-                MainActivity.txtlatitude.Text = currentLocation.Latitude.ToString();
-                MainActivity.txtlong.Text = currentLocation.Longitude.ToString();
-            });
+                TimeZoneInfo systemTimeZone = TimeZoneInfo.Local;
+                DateTime gpsUTCDateTime = (DateTimeOffset.FromUnixTimeMilliseconds(currentLocation.Time)).DateTime;
+                gpslocalDateTime = TimeZoneInfo.ConvertTimeFromUtc(gpsUTCDateTime, systemTimeZone);
+            } 
+            catch (Exception ex)
+            {
+                Crashes.TrackError(ex);
+            } 
+            finally
+            {
+                MainActivity.mContext?.RunOnUiThread(() =>
+                {
+                    MainActivity.txtlatitude.Text = currentLocation.Latitude.ToString();
+                    MainActivity.txtlong.Text = currentLocation.Longitude.ToString();
+                    MainActivity.txtgpsdatetime.Text = gpslocalDateTime.ToString();
+                });
+            }
 
             //Update GUI with OSM data (streetname and street max speed)
             try
@@ -300,9 +335,18 @@ namespace Velociraptor
                 attributes.TryGetValue("name", out streetname);
                 attributes.TryGetValue("maxspeed", out streetspeed);
 
-                if (streetname == String.Empty || streetname is null)
+                if (streetname == String.Empty || streetname is null) 
                 {
                     streetname = "Unknown street/road";
+                }
+
+                if (streetspeed == String.Empty || streetname is null) 
+                {
+                    streetspeed = String.Empty;
+                } 
+                else
+                {
+                    streetspeed  = streetspeed + " " + Resources.GetString(Resource.String.str_kmh);
                 }
 
                 Serilog.Log.Debug($"LocationChangedGUI - Update GUI with streetname and maxspeed");
@@ -310,12 +354,22 @@ namespace Velociraptor
                 {
                     MainActivity.txtstreetname.Text = streetname;
                     MainActivity.txtspeedlimit.Text = streetspeed;
+                    MainActivity.txtlastupdated.Text = (DateTime.Now).ToString("HH:mm:ss");
                 });
             }
             catch (Exception ex)
             {
                 Serilog.Log.Error($"LocationChangedGUI - Crashed: " + ex.ToString());
+                Crashes.TrackError(ex);
             }
+
+            //Update GUI and play notification sound
+            Serilog.Log.Debug($"LocationChangedGUI - Speeding - Update GUI, play a sound and return");
+            MainActivity.txtspeeding.Text = Resources.GetString(Resource.String.str_speeding);
+            var soundUri1 = RingtoneManager.GetDefaultUri(RingtoneType.Notification);
+            var r1 = RingtoneManager.GetRingtone(MainActivity.mContext, soundUri1);
+            r1?.Play();
+
 
             //GPS Speed?
             if (currentLocation.HasSpeed == false)
@@ -331,8 +385,8 @@ namespace Velociraptor
             }
 
             //Convert from m/s to km/h
-            Serilog.Log.Debug($"LocationChangedGUI - Convert speed fro m/s to km/h and update GUI");
-            int speed_kmh = (int)(currentLocation.Speed * 3.6);
+            Serilog.Log.Debug($"LocationChangedGUI - Convert speed from m/s to km/h and update GUI");
+            int speed_kmh = (int)(currentLocation.Speed * 3.6) - 55; /**/
             MainActivity.mContext?.RunOnUiThread(() =>
             {
                 MainActivity.txtspeed.Text = speed_kmh.ToString() + " " + Resources.GetString(Resource.String.str_kmh);
@@ -351,7 +405,7 @@ namespace Velociraptor
             }
 
             //If not speeding, we're done
-            if (speed_kmh < streetspeed_int)
+            if (speed_kmh <= streetspeed_int)
             {
                 Serilog.Log.Debug($"LocationChangedGUI - Not Speeding - Update GUI and return");
                 MainActivity.mContext?.RunOnUiThread(() =>

@@ -14,4 +14,7 @@
     <string name="ExitPrompt">Are you sure you want to exit?</string>
     <string name="Yes">Yes</string>
     <string name="No">No</string>
+    <string name="str_status">Status</string>
+    <string name="str_lastupdated">Last Updated</string>
+    <string name="str_GPSDateTime">GPS DateTime</string>
 </resources>

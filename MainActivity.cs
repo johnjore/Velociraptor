@@ -7,29 +7,28 @@ using Android.Widget;
 using System.Collections.Generic;
 using System.Linq;
 using Itinero;
-using Itinero.Attributes;
-using Itinero.LocalGeo;
 using Xamarin.Essentials;
-using Serilog;
-using Android.Content.PM;
 using Android.Content;
-using AndroidX.Core.View;
+using Android.Content.PM;
+using Microsoft.AppCenter;
+using Microsoft.AppCenter.Analytics;
+using Microsoft.AppCenter.Crashes;
+using Microsoft.Extensions.Configuration;
+using Serilog;
+using Serilog.Sink.AppCenter;
+using Android.Views;
+using Serilog.Core;
+using static Android.Renderscripts.Sampler;
+using static Itinero.Route;
+using static Java.Util.Jar.Attributes;
 
 namespace Velociraptor
 {
     [Activity(Label = "@string/app_name", MainLauncher = true)]
     public class MainActivity : Activity
     {
-        /**///Todo:
-        //Fix / request permissions at runtime
-        //Create menu option to download PBF and convert to routerdb format
-        //Create menu option to select which routerdb to use
-        //Start service after reboot
-        //Implement logging
-
         // Debugging
         public static string? TAG { get; private set; }
-        private const bool Debug = true;
 
         // GUI
         public static TextView? txtlatitude = null;
@@ -38,6 +37,8 @@ namespace Velociraptor
         public static TextView? txtstreetname = null;
         public static TextView? txtspeedlimit = null;
         public static TextView? txtspeeding = null;
+        public static TextView? txtgpsdatetime = null;
+        public static TextView? txtlastupdated = null;
 
         //OSM Data
         public static Itinero.RouterDb routerDb = new();
@@ -59,10 +60,22 @@ namespace Velociraptor
         protected override void OnCreate(Bundle? savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
-            Xamarin.Essentials.Platform.Init(this, savedInstanceState);
 
-            if (Debug)
-                Android.Util.Log.Error(TAG, "+!++ ON CREATE ++!+");
+            if (Resources is null)
+            {
+                return;
+            }
+            
+            string appCenterApiKey = Resources.GetString(Resource.String.Microsoft_App_Center_APIKey);
+            AppCenter.Start(appCenterApiKey, typeof(Analytics), typeof(Crashes));
+
+            Serilog.Log.Logger = new LoggerConfiguration()
+                .WriteTo.AppCenterSink(null, Serilog.Events.LogEventLevel.Debug, AppCenterTarget.ExceptionsAsCrashes, appCenterApiKey)
+                .CreateLogger();
+
+            Xamarin.Essentials.Platform.Init(this, savedInstanceState);
+            Serilog.Log.Debug($"MainActivity - OnCreate()");
+
 
             /*  foreach (Android.Manifest.Permission permission in permissions)
             {
@@ -82,6 +95,8 @@ namespace Velociraptor
             txtspeeding = FindViewById<TextView>(Resource.Id.txtspeeding);
             txtstreetname = FindViewById<TextView>(Resource.Id.txtstreetname);
             txtspeedlimit = FindViewById<TextView>(Resource.Id.txtspeedlimit);
+            txtgpsdatetime = FindViewById<TextView>(Resource.Id.txtgpsdatetime);
+            txtlastupdated = FindViewById<TextView>(Resource.Id.txtlastupdated);
 
             mContext = this;
 
@@ -129,7 +144,7 @@ namespace Velociraptor
 
         private static void InitializeOsmProvider()
         {
-            Android.Util.Log.Debug(TAG, "InitializeOSMProvider() - Start");
+            Serilog.Log.Debug("InitializeOSMProvider() - Start");
 
             //Convert pbf to routerdb format
             /*using (var stream = new FileInfo(@"c:\data\australia-latest.osm.pbf").OpenRead())
@@ -150,7 +165,7 @@ namespace Velociraptor
             foreach (var file in filesList)
             {
                 var filename = Path.GetFileName(file);
-                Android.Util.Log.Debug(TAG, filename);
+                Serilog.Log.Debug(filename);
             }
             */
 
@@ -167,7 +182,7 @@ namespace Velociraptor
             foreach (var file in filesList)
             {
                 var filename = Path.GetFileName(file);
-                Android.Util.Log.Debug(TAG, filename);
+                SeriLog.Log.Debug(filename);
             }
             */
 
@@ -177,7 +192,7 @@ namespace Velociraptor
             profile = routerDb.GetSupportedProfile("car");
             router = new Router(routerDb);
 
-            Android.Util.Log.Debug(TAG, "InitializeOSMProvider() - End");
+            Serilog.Log.Debug("InitializeOSMProvider() - End");
         }
 
         public override void OnRequestPermissionsResult(int requestCode, string[] permissions, Android.Content.PM.Permission[] grantResults)
