@@ -402,7 +402,7 @@ namespace Velociraptor
             }
 
             //If not speeding, we're done
-            if (speed_kmh <= streetspeed_int)
+            if (speed_kmh <= (streetspeed_int * 1.03)) /**///Change to user setting
             {
                 Serilog.Log.Debug($"LocationChangedGUI - Not Speeding - Update GUI and return");
                 MainActivity.mContext?.RunOnUiThread(() =>
