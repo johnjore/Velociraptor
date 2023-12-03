@@ -111,25 +111,26 @@ namespace Velociraptor
 
         public override void OnBackPressed()
         {
-            using var alert = new AlertDialog.Builder(mContext);
-
-            if (mContext is not null && mContext.Resources is not null)
+            if (mContext is null || mContext.Resources is null)
             {
-                alert.SetTitle(mContext.Resources.GetString(Resource.String.ExitTitle));
-                alert.SetMessage(mContext.Resources.GetString(Resource.String.ExitPrompt));
-                alert.SetPositiveButton(Resource.String.Yes, (sender, args) => {
-                    //Location Service
-                    Intent locationServiceIntent = new(this, typeof(LocationForegroundService));
-                    locationServiceIntent.SetAction(PrefsActivity.ACTION_STOP_SERVICE);
-                    StopService(locationServiceIntent);
+                return;
+            }
 
-                    mContext.FinishAffinity(); 
-                });
-                alert.SetNegativeButton(Resource.String.No, (sender, args) => { });
+            using var alert = new AlertDialog.Builder(mContext);
+            alert.SetTitle(mContext.Resources.GetString(Resource.String.ExitTitle));
+            alert.SetMessage(mContext.Resources.GetString(Resource.String.ExitPrompt));
+            alert.SetPositiveButton(Resource.String.Yes, (sender, args) => {
+                //Location Service
+                Intent locationServiceIntent = new(this, typeof(LocationForegroundService));
+                locationServiceIntent.SetAction(PrefsActivity.ACTION_STOP_SERVICE);
+                StopService(locationServiceIntent);
 
-                var dialog = alert.Create();
-                dialog?.Show();
-            }           
+                mContext.FinishAffinity(); 
+            });
+            alert.SetNegativeButton(Resource.String.No, (sender, args) => { });
+
+            var dialog = alert.Create();
+            dialog?.Show();
         }
 
         private static void InitializeOsmProvider()
