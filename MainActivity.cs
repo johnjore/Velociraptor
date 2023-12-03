@@ -17,6 +17,7 @@ using Microsoft.AppCenter.Crashes;
 using Serilog;
 using Serilog.Core;
 using Serilog.Sink.AppCenter;
+using Android;
 
 namespace Velociraptor
 {
@@ -65,8 +66,17 @@ namespace Velociraptor
             Xamarin.Essentials.Platform.Init(this, savedInstanceState);
             Serilog.Log.Debug($"MainActivity - OnCreate()");
 
-            //Request Permissions
+            //Request Location Permission, using xamarin.essentials
             RequestPermission(new LocationAlways());
+
+            //Request Notification Permission, using Android
+            if ((int)Build.VERSION.SdkInt >= 33)
+            {
+                if (this.CheckSelfPermission(Manifest.Permission.PostNotifications) != Permission.Granted)
+                {
+                    this.RequestPermissions(new[] { Manifest.Permission.PostNotifications }, 0);
+                }
+            }
 
             // Set our view from the "main" layout resource
             SetContentView(Resource.Layout.activity_main);
