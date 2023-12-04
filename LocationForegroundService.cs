@@ -115,7 +115,7 @@ namespace Velociraptor
                     if (locationProvider is not null && locationManager is not null)
                     {
                         Serilog.Log.Warning($"ServiceRunning: Creating callback service for LocationUpdates, every 1000ms and 1m");
-                        locationManager.RequestLocationUpdates(locationProvider, 1000, 1, this, Looper.MainLooper); /**/
+                        locationManager.RequestLocationUpdates(locationProvider, 1000, 0, this, Looper.MainLooper); /**/
                     }
                 }
             }
@@ -334,21 +334,20 @@ namespace Velociraptor
                     streetname = "Unknown street/road";
                 }
 
-                if (streetspeed == String.Empty || streetname is null) 
-                {
-                    streetspeed = String.Empty;
-                } 
-                else
-                {
-                    streetspeed  = streetspeed + " " + Resources.GetString(Resource.String.str_kmh);
-                }
-
                 Serilog.Log.Debug($"LocationChangedGUI - Update GUI with streetname and maxspeed");
                 MainActivity.mContext?.RunOnUiThread(() =>
                 {
-                    MainActivity.txtstreetname.Text = streetname;
-                    MainActivity.txtspeedlimit.Text = streetspeed;
                     MainActivity.txtlastupdated.Text = (DateTime.Now).ToString("HH:mm:ss");
+                    MainActivity.txtstreetname.Text = streetname;
+
+                    if (streetspeed == String.Empty || streetname is null)
+                    {
+                        MainActivity.txtspeedlimit.Text = String.Empty;
+                    }
+                    else
+                    {
+                        MainActivity.txtspeedlimit.Text = streetspeed + " " + Resources.GetString(Resource.String.str_kmh);
+                    }                    
                 });
             }
             catch (Exception ex)
@@ -369,6 +368,7 @@ namespace Velociraptor
 
 
             //GPS Speed?
+            /*
             if (currentLocation.HasSpeed == false)
             {
                 Serilog.Log.Error($"LocationChangedGUI - No Speed information. Update GUI and return");
@@ -379,7 +379,7 @@ namespace Velociraptor
                 });
 
                 return;
-            }
+            }*/
 
             //Convert from m/s to km/h
             Serilog.Log.Debug($"LocationChangedGUI - Convert speed from m/s to km/h and update GUI");
@@ -400,9 +400,11 @@ namespace Velociraptor
 
                 return;
             }
+            streetspeed_int = 70;
+            speed_kmh = 100;
 
             //If not speeding, we're done
-            if (speed_kmh <= (streetspeed_int * 1.03)) /**///Change to user setting
+            if (speed_kmh <= (int)(streetspeed_int * 1.03)) /**///Change to user setting
             {
                 Serilog.Log.Debug($"LocationChangedGUI - Not Speeding - Update GUI and return");
                 MainActivity.mContext?.RunOnUiThread(() =>
