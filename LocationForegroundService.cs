@@ -236,7 +236,6 @@ namespace Velociraptor
                             strSpeed = streetspeed + " " + Resources.GetString(Resource.String.str_kmh);
                         }
 
-
                         NotificationCompat.Builder notificationBuilder = new(this, PrefsActivity.NOTIFICATION_CHANNEL_ID);
                         Notification notification = notificationBuilder
                             .SetOngoing(true)
@@ -328,9 +327,9 @@ namespace Velociraptor
             try
             {
                 Serilog.Log.Debug($"LocationChangedGUI - Use GPS position to get streetname and maxspeed");
-                //RouterPoint routerPoint = MainActivity.router.Resolve(MainActivity.profile, new Coordinate((float)currentLocation.Latitude, (float)currentLocation.Longitude));
+                RouterPoint routerPoint = MainActivity.router.Resolve(MainActivity.profile, new Coordinate((float)currentLocation.Latitude, (float)currentLocation.Longitude));
                 //RouterPoint routerPoint = MainActivity.router.Resolve(MainActivity.profile, new Coordinate(-37.81277740408493f, 144.88297495235076f));
-                RouterPoint routerPoint = MainActivity.router.Resolve(MainActivity.profile, new Coordinate(-37.8163561f, 144.9620907f));
+                //RouterPoint routerPoint = MainActivity.router.Resolve(MainActivity.profile, new Coordinate(-37.8163561f, 144.9620907f));
                 Itinero.Data.Network.RoutingEdge edge = MainActivity.routerDb.Network.GetEdge(routerPoint.EdgeId);
                 IAttributeCollection attributes = MainActivity.routerDb.GetProfileAndMeta(edge.Data.Profile, edge.Data.MetaId);
 
@@ -366,8 +365,7 @@ namespace Velociraptor
 
             //Update GUI and play notification sound
             /**/
-            /*
-            Serilog.Log.Debug($"LocationChangedGUI - Speeding - Update GUI, play a sound and return");
+            /*Serilog.Log.Debug($"LocationChangedGUI - Speeding - Update GUI, play a sound and return");
             MainActivity.txtspeeding.Text = Resources.GetString(Resource.String.str_speeding);
             var soundUri1 = RingtoneManager.GetDefaultUri(RingtoneType.Notification);
             var r1 = RingtoneManager.GetRingtone(MainActivity.mContext, soundUri1);
@@ -376,7 +374,7 @@ namespace Velociraptor
 
 
             //GPS Speed?
-            if (currentLocation.HasSpeed == false)
+            /*if (currentLocation.HasSpeed == false)
             {
                 Serilog.Log.Error($"LocationChangedGUI - No Speed information. Update GUI and return");
                 MainActivity.mContext?.RunOnUiThread(() =>
@@ -386,7 +384,7 @@ namespace Velociraptor
                 });
 
                 return;
-            }
+            }*/
 
             //Convert from m/s to km/h
             Serilog.Log.Debug($"LocationChangedGUI - Convert speed from m/s to km/h and update GUI");
