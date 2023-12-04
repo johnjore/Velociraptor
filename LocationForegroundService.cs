@@ -374,7 +374,7 @@ namespace Velociraptor
 
 
             //GPS Speed?
-            /*if (currentLocation.HasSpeed == false)
+            if (currentLocation.HasSpeed == false)
             {
                 Serilog.Log.Error($"LocationChangedGUI - No Speed information. Update GUI and return");
                 MainActivity.mContext?.RunOnUiThread(() =>
@@ -384,7 +384,7 @@ namespace Velociraptor
                 });
 
                 return;
-            }*/
+            }
 
             //Convert from m/s to km/h
             Serilog.Log.Debug($"LocationChangedGUI - Convert speed from m/s to km/h and update GUI");
