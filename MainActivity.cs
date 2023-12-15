@@ -173,6 +173,12 @@ namespace Velociraptor
                 return;
             }
 
+            //Clear GUI field
+            if (txtcountryname != null)
+            {
+                txtcountryname.Text = String.Empty;
+            }
+
             var service = new CountryReverseGeocodeService();
             var country = new GeoLocation { Latitude = location.Latitude, Longitude = location.Longitude };
             LocationInfo locationInfo = service.FindCountry(country);
