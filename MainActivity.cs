@@ -57,6 +57,7 @@ namespace Velociraptor
         public static TextView? txtspeeding = null;
         public static TextView? txtgpsdatetime = null;
         public static TextView? txtlastupdated = null;
+        public static TextView? txtcountryname = null;
         public static MapControl? mapControl = null;
         public static Mapsui.Map? map = null;
 
@@ -119,6 +120,7 @@ namespace Velociraptor
             txtspeedlimit = FindViewById<TextView>(Resource.Id.txtspeedlimit);
             txtgpsdatetime = FindViewById<TextView>(Resource.Id.txtgpsdatetime);
             txtlastupdated = FindViewById<TextView>(Resource.Id.txtlastupdated);
+            txtcountryname = FindViewById<TextView>(Resource.Id.txtcountryname);
             mapControl = FindViewById<MapControl>(Resource.Id.mapcontrol);
 
             //Display the map
@@ -195,6 +197,11 @@ namespace Velociraptor
                     routerDb = RouterDb.Deserialize(stream, RouterDbProfile.NoCache);
                     profile = routerDb.GetSupportedProfile("car");
                     router = new Router(routerDb);
+
+                    if (txtcountryname != null)
+                    {
+                        txtcountryname.Text = countryName + ".db";
+                    }
                 }
                 catch
                 {
