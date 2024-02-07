@@ -2,15 +2,17 @@
 using System.Text;
 using Android.App;
 using Android.Content;
+using Java.Interop;
 
 namespace Velociraptor
 {
-    [BroadcastReceiver(Enabled = true, Label = "Boot Notification") ]
+    [BroadcastReceiver(Exported = true, Enabled = true, Label = "BootBroadcastReceiver")]
+    [IntentFilter(new[] { Intent.ActionBootCompleted })]
     public class BootBroadcastReceiver : BroadcastReceiver
     {
         public override void OnReceive(Context? context, Intent? intent)
         {
-            Serilog.Log.Warning($"BootBroadcastReceiver - OnReceive() Starting");
+            Serilog.Log.Information($"BootBroadcastReceiver - OnReceive() Starting");
 
             if (context is null || intent is null || intent.Action is null)
             {
@@ -23,11 +25,9 @@ namespace Velociraptor
                 Serilog.Log.Debug($"BootBroadcastReceiver - ActionBootcompleted - Starting locationService");
                 Intent locationServiceIntent = new(context, typeof(LocationForegroundService));
                 locationServiceIntent.SetAction(PrefsActivity.ACTION_START_SERVICE);
-                if (Android.OS.Build.VERSION.SdkInt >= Android.OS.BuildVersionCodes.O)
+                if (OperatingSystem.IsAndroidVersionAtLeast(26))
                 {
-#pragma warning disable CA1416
                     context.StartForegroundService(locationServiceIntent);
-#pragma warning restore CA1416
                 }
                 else
                 {

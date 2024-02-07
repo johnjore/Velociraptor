@@ -84,6 +84,8 @@ namespace Velociraptor
 
             Serilog.Log.Logger = new LoggerConfiguration()
                 .WriteTo.AppCenterSink(null, Serilog.Events.LogEventLevel.Debug, AppCenterTarget.ExceptionsAsCrashes, appCenterApiKey)
+                .WriteTo.AndroidLog()
+                .Enrich.WithProperty(Serilog.Core.Constants.SourceContextPropertyName, "velociraptor")
                 .CreateLogger();
 
             Xamarin.Essentials.Platform.Init(this, savedInstanceState);
@@ -322,6 +324,7 @@ namespace Velociraptor
                     locationServiceIntent.SetAction(PrefsActivity.ACTION_STOP_SERVICE);
                     StopService(locationServiceIntent);
 
+                    Serilog.Log.CloseAndFlush();
                     mContext.FinishAffinity();
                 });
                 alert.SetNegativeButton(Resource.String.No, (sender, args) => { });
