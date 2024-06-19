@@ -38,6 +38,7 @@ using Mapsui.Nts;
 using NetTopologySuite.Geometries;
 using Mapsui.Extensions;
 using Mapsui.Widgets.Zoom;
+using TelegramSink;
 
 
 namespace Velociraptor
@@ -59,12 +60,6 @@ namespace Velociraptor
         public static TextView? txtlastupdated = null;
         public static TextView? txtcountryname = null;
         public static MapControl? mapControl = null;
-        public static Mapsui.Map? map = null;
-
-        //OSM Data
-        public static Itinero.RouterDb routerDb = new();
-        public static Itinero.Router? router = null;
-        public static Itinero.Profiles.Profile? profile = null;
 
         //Misc
         public static Activity? mContext;
@@ -80,12 +75,16 @@ namespace Velociraptor
             }
 
             string appCenterApiKey = Resources.GetString(Resource.String.Microsoft_App_Center_APIKey);
+            string telegramApiKey = Resources.GetString(Resource.String.Telegram_APIKey);
+            string telegramChatId = Resources.GetString(Resource.String.Telegram_ChatId);
             AppCenter.Start(appCenterApiKey, typeof(Analytics), typeof(Crashes));
 
             Serilog.Log.Logger = new LoggerConfiguration()
-                .WriteTo.AppCenterSink(null, Serilog.Events.LogEventLevel.Debug, AppCenterTarget.ExceptionsAsCrashes, appCenterApiKey)
-                .WriteTo.AndroidLog()
+                .MinimumLevel.Debug()
                 .Enrich.WithProperty(Serilog.Core.Constants.SourceContextPropertyName, "velociraptor")
+                .WriteTo.AppCenterSink(null, Serilog.Events.LogEventLevel.Warning, AppCenterTarget.ExceptionsAsCrashes, appCenterApiKey)
+                .WriteTo.AndroidLog()
+                //.WriteTo.TeleSink(telegramApiKey: telegramApiKey, telegramChatId: telegramChatId)
                 .CreateLogger();
 
             Xamarin.Essentials.Platform.Init(this, savedInstanceState);
@@ -103,15 +102,17 @@ namespace Velociraptor
             NavigationView? navigationView = FindViewById<NavigationView>(Resource.Id.nav_view);
             navigationView?.SetNavigationItemSelectedListener(this);
 
-
             //Request Permissions, using xamarin.essentials
             RequestPermission(new LocationWhenInUse());
             //RequestPermission(new LocationAlways());
 
             //Request Notification Permission, using Android
-            if (this.CheckSelfPermission(Manifest.Permission.PostNotifications) != Permission.Granted)
+            if (OperatingSystem.IsAndroidVersionAtLeast(33))
             {
-                this.RequestPermissions(new[] { Manifest.Permission.PostNotifications }, 0);
+                if (this.CheckSelfPermission(Manifest.Permission.PostNotifications) != Permission.Granted)
+                {
+                    this.RequestPermissions(new[] { Manifest.Permission.PostNotifications }, 0);
+                }
             }
 
             txtlatitude = FindViewById<TextView>(Resource.Id.txtlatitude);
@@ -125,23 +126,23 @@ namespace Velociraptor
             txtcountryname = FindViewById<TextView>(Resource.Id.txtcountryname);
             mapControl = FindViewById<MapControl>(Resource.Id.mapcontrol);
 
+            /*
             //Display the map
-            /*map = new Mapsui.Map
+            if (mapControl != null)
             {
-                CRS = "EPSG:3857",
-            };*/
+                var map = new Mapsui.Map
+                {
+                    CRS = "EPSG:3857", //https://epsg.io/3857
+                };
+                map.Layers.Add(OpenStreetMap.CreateTileLayer());
 
-            map = new Mapsui.Map();
-            map.CRS = "EPSG:3857";
-            map.Layers.Add(OpenStreetMap.CreateTileLayer());
-            map.Widgets.Add(new ZoomInOutWidget { MarginX = 10, MarginY = 20 });  //adds the +/- zoom widget
-            mapControl.Map = map;
-
-            //var smc = SphericalMercator.FromLonLat(144, -37);
-            //MainActivity.mapControl.Map.Home = n => n.CenterOnAndZoomTo(new MPoint(smc.x, smc.y), 16);  //0 zoomed out-19 zoomed in
+                mapControl.Map = map;
+                mapControl.Map.Navigator.RotationLock = true;
+            }
+            */
 
             Serilog.Log.Debug($"MainActivity - Initilize OSM Provider");
-            InitializeOsmProvider();
+            _ = InitializeOsmProvider();
 
             //Location Service. Service checks if already running
             Serilog.Log.Debug($"MainActivity - Start LocationService");
@@ -161,13 +162,13 @@ namespace Velociraptor
         {
             Serilog.Log.Debug("InitializeOSMProvider() - Start");
 
-            var location = Geolocation.GetLastKnownLocationAsync().Result;
-            if (location == null)
+            var cLocation = Geolocation.GetLastKnownLocationAsync().Result;
+            if (cLocation == null)
             {
-                Serilog.Log.Error($"No cached location? - Can't determinte which database to use. Returning");
+                Serilog.Log.Error($"No cached location? - Can't determine which database to use. Returning");
                 return;
             }
-            Serilog.Log.Information($"Current location: Latitude: {location.Latitude}, Longitude: {location.Longitude}");
+            Serilog.Log.Information($"Current location: Latitude: {cLocation.Latitude}, Longitude: {cLocation.Longitude}");
 
             if (mContext is null)
             {
@@ -175,59 +176,22 @@ namespace Velociraptor
                 return;
             }
 
-            //Clear GUI field
-            if (txtcountryname != null)
+            if (txtcountryname is null)
             {
-                txtcountryname.Text = String.Empty;
+                Serilog.Log.Error($"txtcountryname is null. Returning");
+                return;
             }
 
+            //Clear GUI field
+            txtcountryname.Text = String.Empty;
+
             var service = new CountryReverseGeocodeService();
-            var country = new GeoLocation { Latitude = location.Latitude, Longitude = location.Longitude };
-            LocationInfo locationInfo = service.FindCountry(country);
+            var gLocation = new GeoLocation { Latitude = cLocation.Latitude, Longitude = cLocation.Longitude };
+            LocationInfo locationInfo = service.FindCountry(gLocation);
 
             if (locationInfo == null)
             {
                 Serilog.Log.Error($"locationInfo is null. Unable to determine which router database to use");
-                return;
-            }
-            Serilog.Log.Information($"FindCountry: {locationInfo.Name}");
-            var countryName = locationInfo.Name.ToLower();
-
-            //RouterDB?
-            ShowDialog msg = new(mContext);
-            var dbInfo = new FileInfo(FileSystem.AppDataDirectory + "/" + countryName + ".db");
-            if (dbInfo.Exists == true)
-            {
-                Serilog.Log.Information($"RouterDB exists for country, using it.");
-                try
-                {
-                    var stream = new FileInfo(FileSystem.AppDataDirectory + "/" + countryName + ".db").OpenRead();
-                    routerDb = RouterDb.Deserialize(stream, RouterDbProfile.NoCache);
-                    profile = routerDb.GetSupportedProfile("car");
-                    router = new Router(routerDb);
-
-                    if (txtcountryname != null)
-                    {
-                        txtcountryname.Text = countryName + ".db";
-                    }
-                }
-                catch
-                {
-                    Serilog.Log.Information($"Crashed using routerdb file for {countryName}. Delete?");
-
-                    if (mContext is null)
-                    {
-                        Serilog.Log.Information($"mContext is null. Returning");
-                        return;
-                    }
-
-                    if (await msg.Dialog("Corrupt routerdb", $"Delete '{countryName}.db' road database?", Android.Resource.Attribute.DialogIcon, false, global::ShowDialog.MessageResult.YES, global::ShowDialog.MessageResult.NO) != global::ShowDialog.MessageResult.YES)
-                        return;
-
-                    new FileInfo(FileSystem.AppDataDirectory + "/" + countryName + ".db").Delete();
-                    await InitializeOsmProvider();
-                }
-
                 return;
             }
 
@@ -237,18 +201,46 @@ namespace Velociraptor
                 return;
             }
 
-            Serilog.Log.Warning($"RouterDB does not exists for selected country. Need to add routerdb to app folder");
-            if (await msg.Dialog("Routerdb not found for region", $"Add '{countryName}.db' road database?", Android.Resource.Attribute.DialogIcon, false, global::ShowDialog.MessageResult.YES, global::ShowDialog.MessageResult.NO) != global::ShowDialog.MessageResult.YES) return;
+            Serilog.Log.Information($"FindCountry: '{locationInfo.Name}'");
+            var countryName = locationInfo.Name.ToLower();
 
-            if (Android.OS.Environment.DirectoryDownloads is null)
+            //RouterDB exists?
+            var dbInfo = new FileInfo(FileSystem.AppDataDirectory + "/" + countryName + ".db");
+            if (dbInfo.Exists == false)
             {
-                Serilog.Log.Error($"DirectoryDownloads is null. returning.");
-                return;
+                Serilog.Log.Warning($"RouterDB does not exists for selected country. Need to add routerdb to app folder");
+                ShowDialog msg = new(mContext);
+                if (await msg.Dialog("Routerdb not found for region", $"Add '{countryName}.db' road database?", Android.Resource.Attribute.DialogIcon, false, global::ShowDialog.MessageResult.YES, global::ShowDialog.MessageResult.NO) != global::ShowDialog.MessageResult.YES) return;
+
+                if (Android.OS.Environment.DirectoryDownloads is null)
+                {
+                    Serilog.Log.Error($"DirectoryDownloads is null. returning.");
+                    return;
+                }
+
+                //Getting to this point means there is no working router.db file for the location we are inn
+                //Open filebrowser and select it. File name must match country name
+                await PickAndShow(null, "db");
             }
 
-            //Getting to this point means there is no working router.db file for the location we are inn
-            //Open filebrowser and select it. File name must match country name
-            await PickAndShow(null);
+            //PBF exists?
+            var pbfInfo = new FileInfo(FileSystem.AppDataDirectory + "/" + countryName + ".osm.pbf");
+            if (pbfInfo.Exists == false)
+            {
+                Serilog.Log.Warning($"PBF does not exists for selected country. Need to add PBF to app folder");
+                ShowDialog msg = new(mContext);
+                if (await msg.Dialog("PBF not found for region", $"Add '{countryName}.osm.pbf'?", Android.Resource.Attribute.DialogIcon, false, global::ShowDialog.MessageResult.YES, global::ShowDialog.MessageResult.NO) != global::ShowDialog.MessageResult.YES) return;
+
+                if (Android.OS.Environment.DirectoryDownloads is null)
+                {
+                    Serilog.Log.Error($"DirectoryDownloads is null. returning.");
+                    return;
+                }
+
+                //Getting to this point means there is no working PBF file for the location we are inn
+                //Open filebrowser and select it. File name must match country name
+                await PickAndShow(null, "osm.pbf");
+            }
 
             Serilog.Log.Debug("InitializeOSMProvider() - End");
             return;
@@ -284,9 +276,14 @@ namespace Velociraptor
         {
             int id = item.ItemId;
 
-            if (id == Resource.Id.nav_camera)
+            if (id == Resource.Id.nav_import_db)
             {
-                _ = PickAndShow(null);
+                _ = PickAndShow(null, "db");
+            }
+
+            if (id == Resource.Id.nav_import_pbf)
+            {
+                _ = PickAndShow(null, "osm.pbf");
             }
 
             DrawerLayout? drawer = FindViewById<DrawerLayout>(Resource.Id.drawer_layout);
@@ -342,7 +339,11 @@ namespace Velociraptor
         public override void OnRequestPermissionsResult(int requestCode, string[] permissions, Android.Content.PM.Permission[] grantResults)
         {
             Xamarin.Essentials.Platform.OnRequestPermissionsResult(requestCode, permissions, grantResults);
-            base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
+            
+            if (OperatingSystem.IsAndroidVersionAtLeast(23))
+            {
+                base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
+            }
         }
 
         private static PermissionStatus RequestPermission<T>(T permission) where T : BasePermission
@@ -376,16 +377,16 @@ namespace Velociraptor
             return status;
         }
 
-        async static Task PickAndShow(PickOptions? options)
+        async static Task PickAndShow(PickOptions? options, string file_extention)
         {
             try
             {
                 var result = await FilePicker.PickAsync(options);
                 if (result != null)
                 {
-                    Serilog.Log.Information($"Filenam: {result.FileName}");
+                    Serilog.Log.Information($"Filename: '{result.FileName}'");
 
-                    if (result.FileName.EndsWith("db", StringComparison.OrdinalIgnoreCase))
+                    if (result.FileName.EndsWith(file_extention, StringComparison.OrdinalIgnoreCase))
                     {
                         //Before file copy
                         var filesList = System.IO.Directory.GetFiles(FileSystem.AppDataDirectory);
