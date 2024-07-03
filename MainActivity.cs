@@ -42,12 +42,16 @@ using Mapsui.Widgets.Zoom;
 using NetTopologySuite.Geometries;
 using TelegramSink;
 using Velociraptor.Models;
+using Android.Content.Res;
+using AndroidX.Fragment.App;
+using Google.Android.Material.FloatingActionButton;
+using Google.Android.Material.Snackbar;
 
 
 
 namespace Velociraptor
 {
-    [Activity(Label = "@string/app_name", Theme = "@style/AppTheme.NoActionBar", MainLauncher = true)]
+    [Activity(Name = "no.johnjore.velociraptor.MainActivity", Label = "@string/app_name", Theme = "@style/AppTheme.NoActionBar", MainLauncher = true)]
     public class MainActivity : AppCompatActivity, NavigationView.IOnNavigationItemSelectedListener
     {
         // Debugging
@@ -65,13 +69,9 @@ namespace Velociraptor
         public static TextView? txtcountryname = null;
         public static MapControl? mapControl = null;
 
-        //Misc
-        public static Activity? mContext;
-
-        protected override void OnCreate(Bundle? savedInstanceState)
+        protected override async void OnCreate(Bundle? savedInstanceState)
         {
             base.OnCreate(savedInstanceState);
-            mContext = this;
 
             if (Resources is null)
             {
@@ -106,18 +106,12 @@ namespace Velociraptor
             NavigationView? navigationView = FindViewById<NavigationView>(Resource.Id.nav_view);
             navigationView?.SetNavigationItemSelectedListener(this);
 
-            //Request Permissions, using xamarin.essentials
-            RequestPermission(new LocationWhenInUse());
-            //RequestPermission(new LocationAlways());
+            Serilog.Log.Debug($"Request all application permissions");
+            await AppPermissions.RequestAppPermissions(this);
 
-            //Request Notification Permission, using Android
-            if (OperatingSystem.IsAndroidVersionAtLeast(33))
-            {
-                if (this.CheckSelfPermission(Manifest.Permission.PostNotifications) != Permission.Granted)
-                {
-                    this.RequestPermissions([Manifest.Permission.PostNotifications], 0);
-                }
-            }
+            Serilog.Log.Debug($"Notify user if location permission does not allow background collection");
+            await AppPermissions.LocationPermissionNotification(this);
+
 
             txtlatitude = FindViewById<TextView>(Resource.Id.txtlatitude);
             txtlong = FindViewById<TextView>(Resource.Id.txtlong);
@@ -160,6 +154,9 @@ namespace Velociraptor
             {
                 StartService(locationServiceIntent);
             }
+
+            //Disable battery optimization
+            BatteryOptimization.SetDozeOptimization(this);
 
             /*
             double lat = -37.81076991109956;
@@ -205,7 +202,7 @@ namespace Velociraptor
             }
             Serilog.Log.Information($"Current location: Latitude: {cLocation.Latitude}, Longitude: {cLocation.Longitude}");
 
-            if (mContext is null)
+            if (Platform.CurrentActivity is null)
             {
                 Serilog.Log.Error($"mContext is null. Returning");
                 return;
@@ -230,12 +227,6 @@ namespace Velociraptor
                 return;
             }
 
-            if (mContext is null)
-            {
-                Serilog.Log.Information($"mContext is null. Returning");
-                return;
-            }
-
             Serilog.Log.Information($"FindCountry: '{locationInfo.Name}'");
             var countryName = locationInfo.Name.ToLower();
 
@@ -244,7 +235,7 @@ namespace Velociraptor
             if (dbInfo.Exists == false)
             {
                 Serilog.Log.Warning($"RouterDB does not exists for selected country. Need to add routerdb to app folder");
-                ShowDialog msg = new(mContext);
+                ShowDialog msg = new(Platform.CurrentActivity);
                 if (await msg.Dialog("Routerdb not found for region", $"Add '{countryName}.db' road database?", Android.Resource.Attribute.DialogIcon, false, global::ShowDialog.MessageResult.YES, global::ShowDialog.MessageResult.NO) != global::ShowDialog.MessageResult.YES) return;
 
                 if (Android.OS.Environment.DirectoryDownloads is null)
@@ -263,7 +254,7 @@ namespace Velociraptor
             if (pbfInfo.Exists == false)
             {
                 Serilog.Log.Warning($"PBF does not exists for selected country. Need to add PBF to app folder");
-                ShowDialog msg = new(mContext);
+                ShowDialog msg = new(Platform.CurrentActivity);
                 if (await msg.Dialog("PBF not found for region", $"Add '{countryName}.osm.pbf'?", Android.Resource.Attribute.DialogIcon, false, global::ShowDialog.MessageResult.YES, global::ShowDialog.MessageResult.NO) != global::ShowDialog.MessageResult.YES) return;
 
                 if (Android.OS.Environment.DirectoryDownloads is null)
@@ -342,14 +333,9 @@ namespace Velociraptor
             }
             else
             {
-                if (mContext is null || mContext.Resources is null)
-                {
-                    return;
-                }
-
-                using var alert = new Android.App.AlertDialog.Builder(mContext);
-                alert.SetTitle(mContext.Resources.GetString(Resource.String.ExitTitle));
-                alert.SetMessage(mContext.Resources.GetString(Resource.String.ExitPrompt));
+                using var alert = new Android.App.AlertDialog.Builder(Platform.CurrentActivity);
+                alert.SetTitle(Platform.CurrentActivity?.Resources?.GetString(Resource.String.ExitTitle));
+                alert.SetMessage(Platform.CurrentActivity?.Resources?.GetString(Resource.String.ExitPrompt));
                 alert.SetPositiveButton(Resource.String.Yes, (sender, args) => {
                     //Location Service
                     Intent locationServiceIntent = new(this, typeof(LocationForegroundService));
@@ -357,7 +343,7 @@ namespace Velociraptor
                     StopService(locationServiceIntent);
 
                     Serilog.Log.CloseAndFlush();
-                    mContext.FinishAffinity();
+                    Platform.CurrentActivity?.FinishAffinity();
                 });
                 alert.SetNegativeButton(Resource.String.No, (sender, args) => { });
 
@@ -379,37 +365,6 @@ namespace Velociraptor
             {
                 base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
             }
-        }
-
-        private static PermissionStatus RequestPermission<T>(T permission) where T : BasePermission
-        {
-            PermissionStatus status = PermissionStatus.Unknown;
-
-            if (mContext is null) 
-            {
-                Serilog.Log.Debug($"mContext is null. Returning");
-                return status;
-            }
-
-            try
-            {
-                status = permission.CheckStatusAsync().Result;
-                if (status == PermissionStatus.Denied)
-                {
-                    status = permission.RequestAsync().Result;
-                    if (status == PermissionStatus.Denied)
-                    {
-                        mContext.FinishAffinity();
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Crashes.TrackError(ex);
-                Serilog.Log.Error($"Permission not declared? " + ex.ToString());
-            }
-
-            return status;
         }
 
         async static Task PickAndShow(PickOptions? options, string file_extention)

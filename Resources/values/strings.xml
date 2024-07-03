@@ -1,5 +1,9 @@
 <resources>
   <string name="app_name">Velociraptor</string>
+  <string name="BatterySaveModeEnabledTitle">Battery Save Mode</string>
+  <string name="BatterySaveModeEnabledDescription">Battery Save Mode is Enabled. GPS will not update in background</string>
+  <string name="LocationPermissionTitle">GPS Location Permission</string>
+  <string name="LocationPermissionDescription">Permissions are preventing app from obtaining location data when in background or not front app</string>
   <string name="navigation_drawer_open">Open navigation drawer</string>
   <string name="navigation_drawer_close">Close navigation drawer</string>
   <string name="action_settings">Settings</string>
@@ -17,6 +21,7 @@
   <string name="ExitPrompt">Are you sure you want to exit?</string>
   <string name="Yes">Yes</string>
   <string name="No">No</string>
+  <string name="Ok">Ok</string>
   <string name="str_status">Status</string>
   <string name="str_lastupdated">Last Updated</string>
   <string name="str_GPSDateTime">GPS DateTime</string>

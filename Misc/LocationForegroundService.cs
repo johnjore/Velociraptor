@@ -231,10 +231,10 @@ namespace Velociraptor
                 var features = filtered.ToFeatureSource();
 
                 var items = features.ToList();
-                var ItemCount = items.Count();
+                var ItemCount = items.Count;
 
                 var lineStrings = items.Where(x => x.Geometry.GeometryType == "LineString").ToList();
-                var lineStringCount = lineStrings.Count();
+                var lineStringCount = lineStrings.Count;
                 
                 var completeSource = region.ToComplete();
                 //var filtered = from osmGeo in completeSource where osmGeo.Type == OsmGeoType.Way select osmGeo;
@@ -338,8 +338,6 @@ namespace Velociraptor
 
         public override StartCommandResult OnStartCommand(Intent? intent, StartCommandFlags flags, int startId)
         {
-            SetDozeOptimization(Platform.CurrentActivity, intent);
-
             if (intent is null || intent.Action is null)
             {
                 Serilog.Log.Warning($"OnStartCommand: intent or intent.Action is null ");
@@ -600,7 +598,7 @@ namespace Velociraptor
             string sSpeed = string.Empty;
             try
             {
-                RouterPoint rp = router.Resolve(profile, new Itinero.LocalGeo.Coordinate((float)cLocation.Latitude, (float)cLocation.Longitude), 25.0f);
+                RouterPoint rp = router.Resolve(profile, new Itinero.LocalGeo.Coordinate((float)cLocation.Latitude, (float)cLocation.Longitude), 10.0f);
                 //RouterPoint rp = router.Resolve(profile, new Itinero.LocalGeo.Coordinate(-37.811587f, 144.883007f), 25.0f);
                 Itinero.Data.Network.RoutingEdge edge = routerDb.Network.GetEdge(rp.EdgeId);
                 IAttributeCollection attributes = routerDb.GetProfileAndMeta(edge.Data.Profile, edge.Data.MetaId);
