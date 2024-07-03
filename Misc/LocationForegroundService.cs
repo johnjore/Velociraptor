@@ -74,7 +74,6 @@ namespace Velociraptor
         private static string pbf_StreetName = string.Empty;
         private static string pbf_StreetSpeed = string.Empty;
 
-
         //Debug
         private string strLastUpdate = string.Empty;
         private static readonly Random rand = new();
@@ -111,13 +110,22 @@ namespace Velociraptor
         {
             /**///Remove this global variable
             currentLocation = location;
-            Task.Run(() => ProcessLocationData(location, ));
+            Task.Run(() => ProcessLocationData(location, DateTime.Now));
+
+            Task.Run(() => UpdateGUI());
         }
 
-        private Task? ProcessLocationData(Android.Locations.Location? cLocation)
+        private Task? ProcessLocationData(Android.Locations.Location? cLocation, DateTime datetimeTaskStarted)
         {
             if (cLocation is null)
             {
+                return Task.CompletedTask;
+            }
+
+            //Its to old
+            if (datetimeTaskStarted.AddMinutes(1) < DateTime.Now)
+            {
+                Serilog.Log.Warning($"Date of location data '{datetimeTaskStarted}' is older than '{DateTime.Now}'");
                 return Task.CompletedTask;
             }
 
@@ -133,18 +141,66 @@ namespace Velociraptor
                 OpenCountryDataBase(countryName);
             }
 
-            //Lookup street and speed information
-            (streetName, streetSpeed) = GetStreetInformation(cLocation);
-            if (streetSpeed != null && streetSpeed != string.Empty)
+            int carspeed_kmh = -1;
+            if (cLocation?.Speed != null && cLocation?.Speed >= 0)
             {
-                CheckStreetInformation(cLocation, streetSpeed);
+                carspeed_kmh = (int)(cLocation.Speed * 3.6);
+
+                //Lookup street and speed information
+                (streetName, streetSpeed) = GetStreetInformation(cLocation);
+
+                if (streetSpeed != null && streetSpeed != string.Empty)
+                {
+                    Serilog.Log.Debug($"Parse street speed");
+                    CheckStreetInformation(cLocation, streetSpeed);
+                }
             }
 
             //Lookup street and speed information, PBF Version
             //(pbf_StreetName, pbf_StreetSpeed) = GetStreetInformation_pbf(cLocation);
 
+            //Notification
+            string strText = String.Empty;
+            if (streetName != null && streetName.Length > 0)
+            {
+                strText += streetName + ", ";
+            }
+            
+            if (cLocation?.Speed != null && cLocation?.Speed >= 0)
+            {
+                strText += carspeed_kmh.ToString() + "/";
+            }
+            else
+            {
+                strText += "?/";
+            }
+
+            if (streetSpeed == null)
+            {
+                strText += "?";
+            }
+            else
+            {
+                strText += streetSpeed;
+            }
+
+            strText += "," + strLastUpdate;
+
+            NotificationCompat.Builder notificationBuilder = new(this, PrefsActivity.NOTIFICATION_CHANNEL_ID);
+            Notification notification = notificationBuilder
+                .SetAutoCancel(true)
+                .SetSmallIcon(Resource.Drawable.dyno)
+                .SetContentText(strText)
+                .SetPriority((int)NotificationPriority.Default)
+                .SetCategory(Notification.CategoryRecommendation)
+                .SetContentIntent(BuildIntentToShowMainActivity())
+                .SetSound(null)
+                .Build();
+            NotificationManager? nManager = GetSystemService(Android.Content.Context.NotificationService) as NotificationManager;
+            nManager?.Notify(PrefsActivity.SERVICE_RUNNING_NOTIFICATION_ID, notification);
+
             intCounter -= 1;
-            strLastUpdate = streetName?.ToString() + "," + streetSpeed?.ToString() + ", " + pbf_StreetName?.ToString() + ", " + pbf_StreetSpeed?.ToString() + ", " + cLocation.Latitude.ToString() + ", " + cLocation.Longitude.ToString() + "," + DateTime.Now.ToString("mm:ss") + "," + rand.Next(0, 9) + "," + intCounter.ToString();
+            strLastUpdate = ", " + cLocation?.Latitude.ToString("0.00000000") + ", " + cLocation?.Longitude.ToString("0.00000000") + "," + rand.Next(0, 9) + "/" + intCounter.ToString();
 
             return Task.CompletedTask;
         }
@@ -203,7 +259,7 @@ namespace Velociraptor
 
                 foreach (var osmGeo in filtered)
                 {
-                    Serilog.Log.Debug($"'{osmGeo.ToString()}'");
+                    Serilog.Log.Debug($"'{osmGeo}'");
                 }
                 Serilog.Log.Debug($"Done");
 
@@ -245,14 +301,23 @@ namespace Velociraptor
                 return string.Empty;
             }
 
-            Criteria criteriaForLocationService = new()
-            {
-                Accuracy = Accuracy.Fine,
-                SpeedRequired = true,
-                SpeedAccuracy = Accuracy.Fine
-            };
+            IList<string> acceptableLocationProviders;
 
-            IList<string> acceptableLocationProviders = locationManager.GetProviders(criteriaForLocationService, true);
+            if (OperatingSystem.IsAndroidVersionAtLeast(34))
+            {
+                acceptableLocationProviders = locationManager.GetProviders(true);
+            }
+            else
+            {
+                Criteria criteriaForLocationService = new()
+                {
+                    Accuracy = Accuracy.Fine,
+                    SpeedRequired = true,
+                    SpeedAccuracy = Accuracy.Fine
+                };
+
+                acceptableLocationProviders = locationManager.GetProviders(criteriaForLocationService, true);
+            }
 
             //Choose GPS over all other options
             string? provider = acceptableLocationProviders.Where(x => x.Equals("gps")).FirstOrDefault();
@@ -294,8 +359,6 @@ namespace Velociraptor
                     OnStatusChanged(null, Availability.Available, null);
 
                     isStarted = true;
-                    Thread serviceThread = new(new ThreadStart(ServiceRunning));
-                    serviceThread.Start();
                     RegisterForegroundService();
                 }
             }
@@ -384,10 +447,10 @@ namespace Velociraptor
             // Enlist this instance as a foreground service
             StartForeground(PrefsActivity.SERVICE_RUNNING_NOTIFICATION_ID, notification);
 
-            //Channel for high importance notifications
+            //Channel for notifications
             if (OperatingSystem.IsAndroidVersionAtLeast(26))
             {
-                NotificationChannel nChannel = new(PrefsActivity.NOTIFICATION_CHANNEL_ID_HIGH, PrefsActivity.channelName_high, NotificationImportance.High)
+                NotificationChannel nChannel = new(PrefsActivity.NOTIFICATION_CHANNEL_ID, PrefsActivity.channelName, NotificationImportance.Low)
                 {
                     LockscreenVisibility = NotificationVisibility.Private,
                 };
@@ -416,44 +479,6 @@ namespace Velociraptor
             else
             {
                 return PendingIntent.GetActivity(this, 0, notificationIntent, PendingIntentFlags.UpdateCurrent);
-            }
-        }
-
-        private void ServiceRunning()
-        {
-            while (isStarted)
-            {
-                Serilog.Log.Debug($"LocationService loop is running: " + (DateTime.Now).ToString("mm:ss"));
-                try
-                {
-                    string strSpeed = String.Empty;
-                    if (streetSpeed != String.Empty && streetSpeed != null)
-                    {
-                        strSpeed = streetSpeed + " " + Resources?.GetString(Resource.String.str_kmh);
-                    }
-
-                    NotificationCompat.Builder notificationBuilder = new(this, PrefsActivity.NOTIFICATION_CHANNEL_ID);
-                    Notification notification = notificationBuilder
-                        .SetOngoing(true)
-                        .SetSmallIcon(Resource.Drawable.dyno)
-                        .SetContentText(streetName + "," + streetSpeed + "," + strLastUpdate)
-                        .SetPriority((int)NotificationPriority.Default)
-                        .SetCategory(Notification.CategoryRecommendation)
-                        .SetContentIntent(BuildIntentToShowMainActivity())
-                        .Build();
-
-                    NotificationManager? nManager = GetSystemService(Android.Content.Context.NotificationService) as NotificationManager;
-                    nManager?.Notify(PrefsActivity.SERVICE_RUNNING_NOTIFICATION_ID, notification);
-
-                    UpdateGUI();
-
-                    Thread.Sleep(1000*3);
-                }
-                catch (Exception ex)
-                {
-                    Serilog.Log.Error($"Crashed: " + ex.ToString());
-                    Crashes.TrackError(ex);
-                }
             }
         }
 
@@ -587,10 +612,9 @@ namespace Velociraptor
             }
             catch (Exception ex)
             {
-                Serilog.Log.Debug($"Unable to parse: '{cLocation.Latitude}', '{cLocation.Longitude}', {ex.ToString()}");
+                Serilog.Log.Debug(ex, $"Unable to parse: '{cLocation.Latitude}', '{cLocation.Longitude}'");
             }
             
-
             return (StreetName: sName, StreetSpeed: sSpeed);
         }
 

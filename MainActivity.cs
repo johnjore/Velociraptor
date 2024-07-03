@@ -13,6 +13,8 @@ using AndroidX.DrawerLayout.Widget;
 using AndroidX.AppCompat.App;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
+using System.Text.Json;
 using Itinero;
 using Xamarin.Essentials;
 using static Xamarin.Essentials.Permissions;
@@ -35,10 +37,12 @@ using Mapsui.Widgets;
 using Mapsui.Widgets.ScaleBar;
 using Mapsui.Projections;
 using Mapsui.Nts;
-using NetTopologySuite.Geometries;
 using Mapsui.Extensions;
 using Mapsui.Widgets.Zoom;
+using NetTopologySuite.Geometries;
 using TelegramSink;
+using Velociraptor.Models;
+
 
 
 namespace Velociraptor
@@ -111,7 +115,7 @@ namespace Velociraptor
             {
                 if (this.CheckSelfPermission(Manifest.Permission.PostNotifications) != Permission.Granted)
                 {
-                    this.RequestPermissions(new[] { Manifest.Permission.PostNotifications }, 0);
+                    this.RequestPermissions([Manifest.Permission.PostNotifications], 0);
                 }
             }
 
@@ -156,6 +160,37 @@ namespace Velociraptor
             {
                 StartService(locationServiceIntent);
             }
+
+            /*
+            double lat = -37.81076991109956;
+            double lon = 144.88298804322875;
+            string AzureMapsAPIKey = Resources.GetString(Resource.String.AzureMapsAPIKey);
+            string searchURL = $"https://atlas.microsoft.com/search/address/reverse/json?api-version=1.0&query={lat},{lon}&subscription-key={AzureMapsAPIKey}&returnSpeedLimit=true&radius=25&returnRoadUse=false&returnMatchType=false";
+                        
+            var client = new HttpClient();
+            HttpResponseMessage response = client.GetAsync(searchURL).Result;
+            HttpContent responseContent = response.Content;
+
+            string output = string.Empty;
+            using (var reader = new StreamReader(responseContent.ReadAsStreamAsync().Result))
+            {
+                output = reader.ReadToEndAsync().Result;
+                Console.WriteLine(output);
+            }
+
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+            AzureMapData? azureMapData = JsonSerializer.Deserialize<AzureMapData>(output, options);
+            var azureSpeedLimits = azureMapData?.Addresses?.Select(x => x.Address?.SpeedLimit).ToArray();
+            if (azureSpeedLimits?.Length > 0)
+            {
+                var b = azureSpeedLimits?.First()?.Replace("KPH", "");
+                Console.WriteLine(b);
+            }
+            */
         }
 
         private static async Task InitializeOsmProvider()
