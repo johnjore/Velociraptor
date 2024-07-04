@@ -14,40 +14,20 @@ using AndroidX.AppCompat.App;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using System.Text.Json;
-using Itinero;
 using Xamarin.Essentials;
-using static Xamarin.Essentials.Permissions;
 using Microsoft.AppCenter;
 using Microsoft.AppCenter.Analytics;
 using Microsoft.AppCenter.Crashes;
 using Serilog;
 using Serilog.Core;
 using Serilog.Sink.AppCenter;
-using Wibci.CountryReverseGeocode;
-using Wibci.CountryReverseGeocode.Models;
 using Google.Android.Material.Navigation;
-using Mapsui;
 using Mapsui.UI.Android;
-using Mapsui.Tiling;
-using Mapsui.Utilities;
-using Mapsui.UI;
-using Mapsui.Styles;
-using Mapsui.Widgets;
-using Mapsui.Widgets.ScaleBar;
-using Mapsui.Projections;
-using Mapsui.Nts;
-using Mapsui.Extensions;
-using Mapsui.Widgets.Zoom;
-using NetTopologySuite.Geometries;
 using TelegramSink;
-using Velociraptor.Models;
 using Android.Content.Res;
 using AndroidX.Fragment.App;
 using Google.Android.Material.FloatingActionButton;
 using Google.Android.Material.Snackbar;
-
-
 
 namespace Velociraptor
 {
@@ -124,23 +104,8 @@ namespace Velociraptor
             txtcountryname = FindViewById<TextView>(Resource.Id.txtcountryname);
             mapControl = FindViewById<MapControl>(Resource.Id.mapcontrol);
 
-            /*
-            //Display the map
-            if (mapControl != null)
-            {
-                var map = new Mapsui.Map
-                {
-                    CRS = "EPSG:3857", //https://epsg.io/3857
-                };
-                map.Layers.Add(OpenStreetMap.CreateTileLayer());
-
-                mapControl.Map = map;
-                mapControl.Map.Navigator.RotationLock = true;
-            }
-            */
-
             Serilog.Log.Debug($"MainActivity - Initilize OSM Provider");
-            _ = InitializeOsmProvider();
+            _ = InitializeLocationData.InitializeOsmProvider(this);
 
             //Location Service. Service checks if already running
             Serilog.Log.Debug($"MainActivity - Start LocationService");
@@ -157,119 +122,6 @@ namespace Velociraptor
 
             //Disable battery optimization
             BatteryOptimization.SetDozeOptimization(this);
-
-            /*
-            double lat = -37.81076991109956;
-            double lon = 144.88298804322875;
-            string AzureMapsAPIKey = Resources.GetString(Resource.String.AzureMapsAPIKey);
-            string searchURL = $"https://atlas.microsoft.com/search/address/reverse/json?api-version=1.0&query={lat},{lon}&subscription-key={AzureMapsAPIKey}&returnSpeedLimit=true&radius=25&returnRoadUse=false&returnMatchType=false";
-                        
-            var client = new HttpClient();
-            HttpResponseMessage response = client.GetAsync(searchURL).Result;
-            HttpContent responseContent = response.Content;
-
-            string output = string.Empty;
-            using (var reader = new StreamReader(responseContent.ReadAsStreamAsync().Result))
-            {
-                output = reader.ReadToEndAsync().Result;
-                Console.WriteLine(output);
-            }
-
-            var options = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            };
-
-            AzureMapData? azureMapData = JsonSerializer.Deserialize<AzureMapData>(output, options);
-            var azureSpeedLimits = azureMapData?.Addresses?.Select(x => x.Address?.SpeedLimit).ToArray();
-            if (azureSpeedLimits?.Length > 0)
-            {
-                var b = azureSpeedLimits?.First()?.Replace("KPH", "");
-                Console.WriteLine(b);
-            }
-            */
-        }
-
-        private static async Task InitializeOsmProvider()
-        {
-            Serilog.Log.Debug("InitializeOSMProvider() - Start");
-
-            var cLocation = Geolocation.GetLastKnownLocationAsync().Result;
-            if (cLocation == null)
-            {
-                Serilog.Log.Error($"No cached location? - Can't determine which database to use. Returning");
-                return;
-            }
-            Serilog.Log.Information($"Current location: Latitude: {cLocation.Latitude}, Longitude: {cLocation.Longitude}");
-
-            if (Platform.CurrentActivity is null)
-            {
-                Serilog.Log.Error($"mContext is null. Returning");
-                return;
-            }
-
-            if (txtcountryname is null)
-            {
-                Serilog.Log.Error($"txtcountryname is null. Returning");
-                return;
-            }
-
-            //Clear GUI field
-            txtcountryname.Text = String.Empty;
-
-            var service = new CountryReverseGeocodeService();
-            var gLocation = new GeoLocation { Latitude = cLocation.Latitude, Longitude = cLocation.Longitude };
-            LocationInfo locationInfo = service.FindCountry(gLocation);
-
-            if (locationInfo == null)
-            {
-                Serilog.Log.Error($"locationInfo is null. Unable to determine which router database to use");
-                return;
-            }
-
-            Serilog.Log.Information($"FindCountry: '{locationInfo.Name}'");
-            var countryName = locationInfo.Name.ToLower();
-
-            //RouterDB exists?
-            var dbInfo = new FileInfo(FileSystem.AppDataDirectory + "/" + countryName + ".db");
-            if (dbInfo.Exists == false)
-            {
-                Serilog.Log.Warning($"RouterDB does not exists for selected country. Need to add routerdb to app folder");
-                ShowDialog msg = new(Platform.CurrentActivity);
-                if (await msg.Dialog("Routerdb not found for region", $"Add '{countryName}.db' road database?", Android.Resource.Attribute.DialogIcon, false, global::ShowDialog.MessageResult.YES, global::ShowDialog.MessageResult.NO) != global::ShowDialog.MessageResult.YES) return;
-
-                if (Android.OS.Environment.DirectoryDownloads is null)
-                {
-                    Serilog.Log.Error($"DirectoryDownloads is null. returning.");
-                    return;
-                }
-
-                //Getting to this point means there is no working router.db file for the location we are inn
-                //Open filebrowser and select it. File name must match country name
-                await PickAndShow(null, "db");
-            }
-
-            //PBF exists?
-            var pbfInfo = new FileInfo(FileSystem.AppDataDirectory + "/" + countryName + ".osm.pbf");
-            if (pbfInfo.Exists == false)
-            {
-                Serilog.Log.Warning($"PBF does not exists for selected country. Need to add PBF to app folder");
-                ShowDialog msg = new(Platform.CurrentActivity);
-                if (await msg.Dialog("PBF not found for region", $"Add '{countryName}.osm.pbf'?", Android.Resource.Attribute.DialogIcon, false, global::ShowDialog.MessageResult.YES, global::ShowDialog.MessageResult.NO) != global::ShowDialog.MessageResult.YES) return;
-
-                if (Android.OS.Environment.DirectoryDownloads is null)
-                {
-                    Serilog.Log.Error($"DirectoryDownloads is null. returning.");
-                    return;
-                }
-
-                //Getting to this point means there is no working PBF file for the location we are inn
-                //Open filebrowser and select it. File name must match country name
-                await PickAndShow(null, "osm.pbf");
-            }
-
-            Serilog.Log.Debug("InitializeOSMProvider() - End");
-            return;
         }
 
         public override bool OnCreateOptionsMenu(IMenu? menu)
@@ -304,12 +156,12 @@ namespace Velociraptor
 
             if (id == Resource.Id.nav_import_db)
             {
-                _ = PickAndShow(null, "db");
+                _ = Misc.PickAndShow(null, "db");
             }
 
             if (id == Resource.Id.nav_import_pbf)
             {
-                _ = PickAndShow(null, "osm.pbf");
+                _ = Misc.PickAndShow(null, "osm.pbf");
             }
 
             DrawerLayout? drawer = FindViewById<DrawerLayout>(Resource.Id.drawer_layout);
@@ -365,47 +217,6 @@ namespace Velociraptor
             {
                 base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
             }
-        }
-
-        async static Task PickAndShow(PickOptions? options, string file_extention)
-        {
-            try
-            {
-                var result = await FilePicker.PickAsync(options);
-                if (result != null)
-                {
-                    Serilog.Log.Information($"Filename: '{result.FileName}'");
-
-                    if (result.FileName.EndsWith(file_extention, StringComparison.OrdinalIgnoreCase))
-                    {
-                        //Before file copy
-                        var filesList = System.IO.Directory.GetFiles(FileSystem.AppDataDirectory);
-                        foreach (var file in filesList)
-                        {
-                            var filename = Path.GetFileName(file);
-                            Serilog.Log.Debug(filename);
-                        }
-
-                        var strDestFileName = FileSystem.AppDataDirectory + "/" + result.FileName.ToLower();
-                        File.Copy(result.FullPath, strDestFileName);
-
-                        //After file copy
-                        filesList = System.IO.Directory.GetFiles(FileSystem.AppDataDirectory);
-                        foreach (var file in filesList)
-                        {
-                            var filename = Path.GetFileName(file);
-                            Serilog.Log.Debug(filename);
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Crashes.TrackError(ex);
-                Serilog.Log.Error($"The user canceled or something went wrong: " + ex.ToString());
-            }
-
-            return;
         }
     }
 }

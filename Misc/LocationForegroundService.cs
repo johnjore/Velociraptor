@@ -16,41 +16,15 @@ using Android.Views;
 using Android.Media;
 using AndroidX.Core.App;
 using AndroidX.Fragment.App;
-using Itinero.Profiles;
 using Itinero.Attributes;
-using Itinero.LocalGeo;
 using Itinero;
 using Microsoft.AppCenter;
 using Microsoft.AppCenter.Analytics;
 using Microsoft.AppCenter.Crashes;
-using Serilog;
-using Serilog.Sink.AppCenter;
 using Xamarin.Essentials;
-using Mapsui;
-using Mapsui.Extensions;
-using Mapsui.Fetcher;
-using Mapsui.Layers;
-using Mapsui.Nts;
-using Mapsui.Projections;
-using Mapsui.Providers;
-using Mapsui.Rendering;
-using Mapsui.Styles;
-using Mapsui.Tiling;
-using Mapsui.UI;
-using Mapsui.UI.Android;
-using Mapsui.Utilities;
-using Mapsui.Widgets;
 using Random = System.Random;
 using Wibci.CountryReverseGeocode.Models;
 using Wibci.CountryReverseGeocode;
-using NetTopologySuite.Features;
-using NetTopologySuite.Geometries;
-using OsmSharp;
-using OsmSharp.Geo;
-using OsmSharp.Streams;
-using static Velociraptor.Misc;
-using SkiaSharp;
-
 
 namespace Velociraptor
 {
@@ -70,14 +44,20 @@ namespace Velociraptor
         private static string streetSpeed = string.Empty;
         private static Android.Locations.Location? currentLocation; /**///Remove me
 
-        //PBF
-        private static string pbf_StreetName = string.Empty;
-        private static string pbf_StreetSpeed = string.Empty;
-
         //Debug
         private string strLastUpdate = string.Empty;
         private static readonly Random rand = new();
         private static int intCounter = 0;
+
+        public static string GetStreetname()
+        {
+            return streetName;
+        }
+
+        public static string GetStreetSpeed()
+        {
+            return streetSpeed;
+        }
 
         public void OnProviderDisabled(string provider)
         {
@@ -108,11 +88,12 @@ namespace Velociraptor
 
         public void OnLocationChanged(Android.Locations.Location location)
         {
+            Serilog.Log.Debug("OnLocationChanged - " + DateTime.Now.ToString("HH:mm:ss"));
             /**///Remove this global variable
             currentLocation = location;
             Task.Run(() => ProcessLocationData(location, DateTime.Now));
 
-            Task.Run(() => UpdateGUI());
+            Task.Run(() => UpdateScreen.UpdateGUI(location));
         }
 
         private Task? ProcessLocationData(Android.Locations.Location? cLocation, DateTime datetimeTaskStarted)
@@ -204,92 +185,6 @@ namespace Velociraptor
 
             return Task.CompletedTask;
         }
-
-        private static (string pbf_StreetName, string pbf_StreetSpeed) GetStreetInformation_pbf(Android.Locations.Location? cLocation)
-        {
-            string sName = string.Empty;
-            string sSpeed = string.Empty;
-
-            var bbox = Misc.GetBoundingBox(cLocation, 100);
-
-            if (bbox == null)
-            {
-                return (pbf_StreetName: string.Empty, pbf_StreetSpeed: string.Empty);
-            }
-
-            if (bbox.MinPoint == null || bbox.MaxPoint == null)
-            {
-                return (pbf_StreetName: string.Empty, pbf_StreetSpeed: string.Empty);
-            }
-
-            using (var fileStream = File.OpenRead(FileSystem.AppDataDirectory + "/" + /*countryName*/ "luxembourg" + ".osm.pbf"))
-            {
-                var source = new PBFOsmStreamSource(fileStream);
-                //var region = source.FilterBox(bbox.MaxPoint.Latitude, bbox.MaxPoint.Longitude, bbox.MinPoint.Latitude, bbox.MinPoint.Longitude);
-                var region = source.FilterBox(6.242969810172371f, 49.71720151392213f, 6.249192535136989f, 49.71520366157044f);
-                var filtered = region.Where(x => x.Type == OsmSharp.OsmGeoType.Way || x.Type == OsmSharp.OsmGeoType.Node);
-                var features = filtered.ToFeatureSource();
-
-                var items = features.ToList();
-                var ItemCount = items.Count;
-
-                var lineStrings = items.Where(x => x.Geometry.GeometryType == "LineString").ToList();
-                var lineStringCount = lineStrings.Count;
-                
-                var completeSource = region.ToComplete();
-                //var filtered = from osmGeo in completeSource where osmGeo.Type == OsmGeoType.Way select osmGeo;
-
-                /*var filtered = from osmGeo in progress
-                               where osmGeo.Type == OsmSharp.OsmGeoType.Node ||
-                                     (osmGeo.Type == OsmSharp.OsmGeoType.Way && osmGeo.Tags != null && osmGeo.Tags.Contains("power", "line"))
-                               select osmGeo;
-                */
-                Serilog.Log.Debug(filtered.Count().ToString());
-                Serilog.Log.Debug("ArfArf");
-                Serilog.Log.Debug("ArfArf");
-
-                //var filtered2 = from osmGeo in progress where osmGeo.Type == OsmGeoType.Way select osmGeo;
-
-
-                /*                var filtered2 = from osmGeo in progress
-                                                where osmGeo.Type == OsmSharp.OsmGeoType.Node ||
-                                                      (osmGeo.Type == OsmSharp.OsmGeoType.Way && osmGeo.Tags != null) // && osmGeo.Tags.Contains("highway", "residential"))
-                                                select osmGeo;
-                */
-
-                foreach (var osmGeo in filtered)
-                {
-                    Serilog.Log.Debug($"'{osmGeo}'");
-                }
-                Serilog.Log.Debug($"Done");
-
-
-                /*df_osm.loc[df_osm.tagkey == 'highway', ['id', 'tagvalue']].merge(
-                    df_osm.loc[df_osm.tagkey == 'name', ['id', 'tagvalue']],
-                    on = 'id', suffixes = ['_kind', '_name'])*/
-
-                /*var features = filtered2.ToFeatureSource();
-
-                var lineStrings = from feature in features
-                                  where feature.Geometry is LineString
-                                  select feature;
-                */
-                /*var featureCollection = new FeatureCollection();
-                foreach (var feature in lineStrings)
-                {
-                    featureCollection.Add(feature);
-                    //Serilog.Log.Debug($"'{feature.ToString()}'");
-                }
-                */
-                Serilog.Log.Debug($"Done");
-                //var json = ToJson(featureCollection);
-            }
-
-
-
-            return (pbf_StreetName: sName, pbf_StreetSpeed: sSpeed);
-        }
-
 
         public string InitializeLocationManager()
         {
@@ -677,214 +572,5 @@ namespace Velociraptor
 
             nManager?.Cancel(PrefsActivity.NOTIFICATION_ID_HIGH);
         }
-
-        private void UpdateGUI()
-        {
-            if ((MainActivity.txtlatitude is null) ||
-                (MainActivity.txtlong is null) ||
-                (MainActivity.txtspeed is null) ||
-                (MainActivity.txtstreetname is null) ||
-                (MainActivity.txtspeedlimit is null) ||
-                (MainActivity.txtspeeding is null) ||
-                (MainActivity.txtgpsdatetime is null) ||
-                (MainActivity.txtlastupdated is null) ||
-                (MainActivity.mapControl is null)) 
-            {
-                Serilog.Log.Error($"UpdateGUI - One or more GUI objects are null");
-                return;
-            }
-
-            if (Resources is null)
-            {
-                Serilog.Log.Error($"UpdateGUI - Resources is null, returning early");
-                return;
-            }
-
-            if (currentLocation == null)
-            {
-                Serilog.Log.Warning($"UpdateGUI - currentLocation is null, set all TextView fields to N/A");
-                MainActivity.txtlatitude.Text = Resources.GetString(Resource.String.str_na);
-                MainActivity.txtlong.Text = Resources.GetString(Resource.String.str_na);
-                MainActivity.txtspeed.Text = Resources.GetString(Resource.String.str_na);
-                MainActivity.txtstreetname.Text = Resources.GetString(Resource.String.str_na);
-                MainActivity.txtspeedlimit.Text = Resources.GetString(Resource.String.str_na);
-                MainActivity.txtspeeding.Text = Resources.GetString(Resource.String.str_na);
-                MainActivity.txtgpsdatetime.Text = Resources.GetString(Resource.String.str_na);
-                return;
-            }
-
-            //Updated
-            MainActivity.txtlastupdated.Text = (DateTime.Now).ToString("HH:mm:ss");
-
-            //GPS Information
-            Serilog.Log.Debug($"UpdateGUI - Update GPS related TextView fields");
-            MainActivity.txtlatitude.Text = currentLocation.Latitude.ToString("0.00000");
-            MainActivity.txtlong.Text = currentLocation.Longitude.ToString("0.00000");
-
-            /*
-            //Update map
-            if (MainActivity.mapControl is not null)
-            {
-                var (x, y) = SphericalMercator.FromLonLat(currentLocation.Longitude, currentLocation.Latitude);
-                //MainActivity.mapControl.Map.Home = n => n.CenterOnAndZoomTo(new MPoint(x, y), n.Resolutions[17]);  //0 zoomed out-19 zoomed in
-                MainActivity.mapControl.Map.Navigator.CenterOnAndZoomTo(new MPoint(x, y), 1);
-
-                //Rotate map so it matches direction of travel
-                if (currentLocation.HasBearing)
-                {
-                    if (OperatingSystem.IsAndroidVersionAtLeast(26))
-                    {
-                        if (currentLocation.HasBearingAccuracy)
-                        {
-                            MainActivity.mapControl.Rotation = currentLocation.Bearing;
-                        }
-                    }
-                    else
-                    {
-                        MainActivity.mapControl.Rotation = currentLocation.Bearing;
-                    }
-                }
-                else
-                {
-                    MainActivity.mapControl.Rotation = 0;
-                }
-                */
-
-                /*
-                Point? sphericalMercatorCoordinate = null;
-                ILayer layer = MainActivity.mapControl.Map.Layers.FindLayer(PrefsActivity.LocationLayerName).FirstOrDefault();
-                if (layer == null)
-                {
-                    MainActivity.mapControl.Map.Layers.Add(CreateLocationLayer(sphericalMercatorCoordinate));
-                    layer = MainActivity.mapControl.Map.Layers.FindLayer(PrefsActivity.LocationLayerName).FirstOrDefault();
-                }
-
-
-                MainActivity.mapControl.Map.Refresh();
-                MainActivity.mapControl.Refresh();
-            }
-            */
-
-            //Convert GPS time in ms since epoch in UTC to local datetime
-            DateTime gpslocalDateTime = default;
-            try
-            {
-                TimeZoneInfo systemTimeZone = TimeZoneInfo.Local;
-                DateTime gpsUTCDateTime = DateTimeOffset.FromUnixTimeMilliseconds(currentLocation.Time).DateTime;
-                gpslocalDateTime = TimeZoneInfo.ConvertTimeFromUtc(gpsUTCDateTime, systemTimeZone);
-            }
-            catch (Exception ex)
-            {
-                Crashes.TrackError(ex);
-            }
-            finally
-            {
-                MainActivity.txtgpsdatetime.Text = gpslocalDateTime.ToString("HH:mm:ss");
-            }
-
-            //Update GUI with OSM data (streetname and street max speed)
-            if (streetName == String.Empty || streetName is null)
-            {
-                MainActivity.txtstreetname.Text = "Unknown street/road";
-            } 
-            else
-            {
-                MainActivity.txtstreetname.Text = streetName;
-            }
-
-            if (streetSpeed == String.Empty || streetSpeed is null)
-            {
-                MainActivity.txtspeedlimit.Text = Resources.GetString(Resource.String.str_na);
-            }
-            else
-            {
-                MainActivity.txtspeedlimit.Text = streetSpeed + " " + Resources.GetString(Resource.String.str_kmh);
-            }
-
-            //GPS Speed?
-            if (currentLocation.HasSpeed == false)
-            {
-                Serilog.Log.Debug($"UpdateGUI - No Speed information. Update GUI and return");
-                MainActivity.txtspeed.Text = Resources.GetString(Resource.String.str_na);
-                MainActivity.txtspeeding.Text = String.Empty;
-
-                return;
-            }
-
-            int carspeed_kmh = (int)(currentLocation.Speed * 3.6);
-            MainActivity.txtspeed.Text = carspeed_kmh.ToString() + " " + Resources.GetString(Resource.String.str_kmh);
-
-            //If streetspeed is not defined, we can't calculate if car is speeding or not
-            if (streetSpeed == String.Empty || streetSpeed is null)
-            {
-                MainActivity.txtspeeding.Text = String.Empty;
-                return;
-            }
-
-            if (Int32.TryParse(streetSpeed, out int streetspeed_int) == false)
-            {
-                Serilog.Log.Error($"UpdateGUI - Failed to convert streetspeed string to int. Clear speeding field and return");
-                MainActivity.txtspeeding.Text = String.Empty;
-
-                return;
-            }
-
-            int speedmargin = Int32.Parse(Preferences.Get("SpeedGracePercent", PrefsActivity.default_speed_margin.ToString()));
-            if (carspeed_kmh <= (int)(streetspeed_int * speedmargin / 100 + streetspeed_int))
-            {
-                MainActivity.txtspeeding.Text = String.Empty;
-            } 
-            else
-            {
-                MainActivity.txtspeeding.Text = Resources.GetString(Resource.String.str_speeding);
-            }            
-        }
-
-        /*
-        public static ILayer CreateLocationLayer(Point GPSLocation)
-        {
-            
-            return new MemoryLayer
-            {
-                Name = PrefsActivity.LocationLayerName,
-                DataSource = CreateMemoryProviderWithDiverseSymbols(GPSLocation),
-                Style = null,
-                IsMapInfoLayer = true
-            };
-        }
-        */
-        /*
-        private static MemoryProvider CreateMemoryProviderWithDiverseSymbols(Point GPSLocation)
-        {
-            return new MemoryProvider(CreateLocationMarker(GPSLocation));
-        }
-        */
-        /*
-        private static GeometryFeature CreateLocationMarker(Point GPSLocation)
-        {
-            var features = new GeometryFeature
-            {
-                CreateLocationFeature(GPSLocation)
-            };
-            return features;
-        }
-        */
-        /*
-        private static IFeature CreateLocationFeature(Point GPSLocation)
-        {
-            
-            var feature = new GeometryFeature { Geometry = GPSLocation };
-            
-            feature.Styles.Add(new SymbolStyle
-            {
-                SymbolScale = 1.5f,
-                Fill = null,
-                Outline = new Pen { Color = Mapsui.Styles.Color.Blue, Width = 2.0 }
-            });
-            
-            return feature;            
-        }
-        */
-
     }
 }

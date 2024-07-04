@@ -13,10 +13,10 @@ namespace Velociraptor
         //Location Service
         public const int SERVICE_RUNNING_NOTIFICATION_ID = 10005;
         public const string NOTIFICATION_CHANNEL_ID = "no.jore.velociraptor.service";
-        public const string channelName = "App Service1";
+        public const string channelName = "App Service";
         public const int NOTIFICATION_ID_HIGH = 10006;
-        public const string NOTIFICATION_CHANNEL_ID_HIGH = "no.jore.velociraptor.high6";
-        public const string channelName_high = "High priority notifications6";
+        public const string NOTIFICATION_CHANNEL_ID_HIGH = "no.jore.velociraptor.high";
+        public const string channelName_high = "High priority notifications";
         public const string SERVICE_STARTED_KEY = "has_service_been_started";
         public const string ACTION_START_SERVICE = "velociraptor.action.START_SERVICE";
         public const string ACTION_STOP_SERVICE = "velociraptor.action.STOP_SERVICE";

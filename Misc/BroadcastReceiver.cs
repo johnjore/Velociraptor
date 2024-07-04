@@ -2,12 +2,11 @@
 using System.Text;
 using Android.App;
 using Android.Content;
-using Java.Interop;
 
 namespace Velociraptor
 {
     [BroadcastReceiver(Exported = true, Enabled = true, Label = "BootBroadcastReceiver")]
-    [IntentFilter(new[] { Intent.ActionBootCompleted })]
+    [IntentFilter([Intent.ActionBootCompleted])]
     public class BootBroadcastReceiver : BroadcastReceiver
     {
         public override void OnReceive(Context? context, Intent? intent)
