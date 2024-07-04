@@ -78,8 +78,8 @@ namespace Velociraptor
 
             if (lProvider != null && locationManager != null)
             {
-                var intTimer = 3000;
-                var intDistance = 0;
+                var intDistance = PrefsActivity.intDistance;
+                var intTimer = PrefsActivity.intTimer;
                 Serilog.Log.Debug($"ServiceRunning: Creating callback service for LocationUpdates, every " + intTimer.ToString() + "s and " + intDistance.ToString() + "m");
                 locationManager.RequestLocationUpdates(lProvider, intTimer, intDistance, this, Looper.MainLooper);
             }

@@ -22,6 +22,11 @@ namespace Velociraptor
         public const string ACTION_STOP_SERVICE = "velociraptor.action.STOP_SERVICE";
         public const string ACTION_MAIN_ACTIVITY = "velociraptor.action.MAIN_ACTIVITY";
 
+        //Location Service
+        public const int intTimer = 2000;   //How often to get new location
+        public const int intDistance = 0;   //Minimum distance for new location
+
+
         //Map
         public const string LocationLayerName = "Location";
 
