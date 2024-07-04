@@ -55,7 +55,7 @@ namespace Velociraptor
             }
             else
             {
-                Serilog.Log.Debug($"BatteryOptimizations Not Support (Requires 23 or above)");
+                Serilog.Log.Debug($"BatteryOptimizations Not Supported - Requires API 23 or above");
                 return false;
             }
         }

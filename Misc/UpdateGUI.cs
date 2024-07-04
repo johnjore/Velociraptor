@@ -22,8 +22,8 @@ namespace Velociraptor
                 (MainActivity.txtspeedlimit is null) ||
                 (MainActivity.txtspeeding is null) ||
                 (MainActivity.txtgpsdatetime is null) ||
-                (MainActivity.txtlastupdated is null))
-            //(MainActivity.mapControl is null)) 
+                (MainActivity.txtlastupdated is null) ||
+                (MainActivity.mapControl is null)) 
             {
                 Serilog.Log.Error($"UpdateGUI - One or more GUI objects are null");
                 return;

@@ -43,7 +43,7 @@ namespace Velociraptor
         }
 
         /// <summary>
-        /// Notify user if location permission does not allow background collection
+        /// Exit application if location permission does not allow background collection
         /// </summary>
         public static async Task<bool> LocationPermissionNotification(Activity activity)
         {

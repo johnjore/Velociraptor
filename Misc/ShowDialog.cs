@@ -52,10 +52,6 @@ public class ShowDialog
 
         MainThread.BeginInvokeOnMainThread(() =>
         {
-        });
-
-        MainThread.BeginInvokeOnMainThread(() =>
-        {
             builder.Show();
         });
 

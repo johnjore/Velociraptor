@@ -42,7 +42,6 @@ namespace Velociraptor
         private static string countryName = string.Empty;
         private static string streetName = string.Empty;
         private static string streetSpeed = string.Empty;
-        private static Android.Locations.Location? currentLocation; /**///Remove me
 
         //Debug
         private string strLastUpdate = string.Empty;
@@ -89,11 +88,18 @@ namespace Velociraptor
         public void OnLocationChanged(Android.Locations.Location location)
         {
             Serilog.Log.Debug("OnLocationChanged - " + DateTime.Now.ToString("HH:mm:ss"));
-            /**///Remove this global variable
-            currentLocation = location;
+
             Task.Run(() => ProcessLocationData(location, DateTime.Now));
 
-            Task.Run(() => UpdateScreen.UpdateGUI(location));
+            //Foreground?
+            ActivityManager.RunningAppProcessInfo appProcessInfo = new ActivityManager.RunningAppProcessInfo();
+            ActivityManager.GetMyMemoryState(appProcessInfo);
+            bool inForeground = (appProcessInfo.Importance == Importance.Foreground || appProcessInfo.Importance == Importance.Visible);
+
+            if (inForeground)
+            {
+                Task.Run(() => UpdateScreen.UpdateGUI(location));
+            }
         }
 
         private Task? ProcessLocationData(Android.Locations.Location? cLocation, DateTime datetimeTaskStarted)
@@ -527,7 +533,7 @@ namespace Velociraptor
 
             //Convert from m/s to km/h
             int carspeed_kmh = (int)(cLocation.Speed * 3.6);
-            Serilog.Log.Debug($"Convert car speed from '" + cLocation.Speed.ToString() + "'m/s to " + carspeed_kmh.ToString() + "km/h: '");
+            Serilog.Log.Debug($"Convert car speed from " + cLocation.Speed.ToString() + "m/s to " + carspeed_kmh.ToString() + "km/h");
 
             //Flying?
             if (carspeed_kmh >= 200)
