@@ -556,19 +556,31 @@ namespace Velociraptor
                 Serilog.Log.Debug($"Not Speeding - Done");
                 return;
             }
+
             Serilog.Log.Debug($"Show High Priority Notification");
+            
+            NotificationManager? nManager = GetSystemService(Android.Content.Context.NotificationService) as NotificationManager;
+            if (OperatingSystem.IsAndroidVersionAtLeast(26))
+            {
+                NotificationChannel nChannel = new(PrefsFragment.NOTIFICATION_CHANNEL_ID_HIGH, PrefsFragment.channelName, NotificationImportance.High)
+                {
+                    LockscreenVisibility = NotificationVisibility.Private,
+                };
+
+                nManager?.CreateNotificationChannel(nChannel);
+            }
+
             NotificationCompat.Builder notificationBuilder = new(this, PrefsFragment.NOTIFICATION_CHANNEL_ID_HIGH);
             Notification notification = notificationBuilder
                 .SetAutoCancel(true)
                 .SetSmallIcon(Resource.Drawable.dyno)
-                .SetContentText(intCounter.ToString() + ", " + Resources?.GetString(Resource.String.str_speeding) + ", " + sSpeed + " / " + carspeed_kmh.ToString())
+                .SetContentText(intCounter.ToString() + ": " + Resources?.GetString(Resource.String.str_speeding) + ": " + carspeed_kmh.ToString() + " in a " + sSpeed + " zone")
                 .SetPriority((int)NotificationPriority.High)
                 .SetCategory(Notification.CategoryRecommendation)
                 .SetContentIntent(BuildIntentToShowMainActivity())
                 .SetSound(null)
                 .Build();
 
-            NotificationManager? nManager = GetSystemService(Android.Content.Context.NotificationService) as NotificationManager;
             nManager?.Notify(PrefsFragment.NOTIFICATION_ID_HIGH, notification);
 
             Serilog.Log.Debug($"Play a sound");
