@@ -78,8 +78,8 @@ namespace Velociraptor
 
             if (lProvider != null && locationManager != null)
             {
-                var intDistance = PrefsActivity.intDistance;
-                var intTimer = PrefsActivity.intTimer;
+                var intDistance = PrefsFragment.intDistance;
+                var intTimer = PrefsFragment.intTimer;
                 Serilog.Log.Debug($"ServiceRunning: Creating callback service for LocationUpdates, every " + intTimer.ToString() + "s and " + intDistance.ToString() + "m");
                 locationManager.RequestLocationUpdates(lProvider, intTimer, intDistance, this, Looper.MainLooper);
             }
@@ -173,7 +173,7 @@ namespace Velociraptor
 
             strText += "," + strLastUpdate;
 
-            NotificationCompat.Builder notificationBuilder = new(this, PrefsActivity.NOTIFICATION_CHANNEL_ID);
+            NotificationCompat.Builder notificationBuilder = new(this, PrefsFragment.NOTIFICATION_CHANNEL_ID);
             Notification notification = notificationBuilder
                 .SetAutoCancel(true)
                 .SetSmallIcon(Resource.Drawable.dyno)
@@ -184,7 +184,7 @@ namespace Velociraptor
                 .SetSound(null)
                 .Build();
             NotificationManager? nManager = GetSystemService(Android.Content.Context.NotificationService) as NotificationManager;
-            nManager?.Notify(PrefsActivity.SERVICE_RUNNING_NOTIFICATION_ID, notification);
+            nManager?.Notify(PrefsFragment.SERVICE_RUNNING_NOTIFICATION_ID, notification);
 
             intCounter -= 1;
             strLastUpdate = ", " + cLocation?.Latitude.ToString("0.00000000") + ", " + cLocation?.Longitude.ToString("0.00000000") + "," + rand.Next(0, 9) + "/" + intCounter.ToString();
@@ -245,7 +245,7 @@ namespace Velociraptor
                 return StartCommandResult.Sticky;
             }
 
-            if (intent.Action.Equals(PrefsActivity.ACTION_START_SERVICE))
+            if (intent.Action.Equals(PrefsFragment.ACTION_START_SERVICE))
             {
                 if (isStarted)
                 {
@@ -261,7 +261,7 @@ namespace Velociraptor
                     RegisterForegroundService();
                 }
             }
-            else if (intent.Action.Equals(PrefsActivity.ACTION_STOP_SERVICE))
+            else if (intent.Action.Equals(PrefsFragment.ACTION_STOP_SERVICE))
             {
                 Serilog.Log.Information($"OnStartCommand: The location service is stopping.");
 
@@ -301,8 +301,8 @@ namespace Velociraptor
 
                 // Remove the notifications
                 NotificationManager? notificationManager = GetSystemService(NotificationService) as NotificationManager;
-                notificationManager?.Cancel(PrefsActivity.SERVICE_RUNNING_NOTIFICATION_ID);
-                notificationManager?.Cancel(PrefsActivity.NOTIFICATION_ID_HIGH);
+                notificationManager?.Cancel(PrefsFragment.SERVICE_RUNNING_NOTIFICATION_ID);
+                notificationManager?.Cancel(PrefsFragment.NOTIFICATION_ID_HIGH);
             }
             catch (Exception ex)
             {
@@ -324,7 +324,7 @@ namespace Velociraptor
             NotificationManager? nManager = GetSystemService(Android.Content.Context.NotificationService) as NotificationManager;
             if (OperatingSystem.IsAndroidVersionAtLeast(26))
             {
-                NotificationChannel nChannel = new(PrefsActivity.NOTIFICATION_CHANNEL_ID, PrefsActivity.channelName, NotificationImportance.Low)
+                NotificationChannel nChannel = new(PrefsFragment.NOTIFICATION_CHANNEL_ID, PrefsFragment.channelName, NotificationImportance.Low)
                 {
                     LockscreenVisibility = NotificationVisibility.Private,
                 };
@@ -332,7 +332,7 @@ namespace Velociraptor
                 nManager?.CreateNotificationChannel(nChannel);
             }
 
-            NotificationCompat.Builder notificationBuilder = new(this, PrefsActivity.NOTIFICATION_CHANNEL_ID);
+            NotificationCompat.Builder notificationBuilder = new(this, PrefsFragment.NOTIFICATION_CHANNEL_ID);
             Notification notification = notificationBuilder
                 .SetOngoing(true)
                 .SetSmallIcon(Resource.Drawable.dyno)
@@ -344,12 +344,12 @@ namespace Velociraptor
                 .Build();
 
             // Enlist this instance as a foreground service
-            StartForeground(PrefsActivity.SERVICE_RUNNING_NOTIFICATION_ID, notification);
+            StartForeground(PrefsFragment.SERVICE_RUNNING_NOTIFICATION_ID, notification);
 
             //Channel for notifications
             if (OperatingSystem.IsAndroidVersionAtLeast(26))
             {
-                NotificationChannel nChannel = new(PrefsActivity.NOTIFICATION_CHANNEL_ID, PrefsActivity.channelName, NotificationImportance.Low)
+                NotificationChannel nChannel = new(PrefsFragment.NOTIFICATION_CHANNEL_ID, PrefsFragment.channelName, NotificationImportance.Low)
                 {
                     LockscreenVisibility = NotificationVisibility.Private,
                 };
@@ -367,9 +367,9 @@ namespace Velociraptor
         PendingIntent? BuildIntentToShowMainActivity()
         {
             var notificationIntent = new Intent(this, typeof(MainActivity));
-            notificationIntent.SetAction(PrefsActivity.ACTION_MAIN_ACTIVITY);
+            notificationIntent.SetAction(PrefsFragment.ACTION_MAIN_ACTIVITY);
             notificationIntent.SetFlags(ActivityFlags.SingleTop | ActivityFlags.ClearTask);
-            notificationIntent.PutExtra(PrefsActivity.SERVICE_STARTED_KEY, true);
+            notificationIntent.PutExtra(PrefsFragment.SERVICE_STARTED_KEY, true);
 
             if (OperatingSystem.IsAndroidVersionAtLeast(23))
             {
@@ -550,14 +550,14 @@ namespace Velociraptor
             }
 
             //If not speeding, we're done
-            int speedmargin = Int32.Parse(Preferences.Get("SpeedGracePercent", PrefsActivity.default_speed_margin.ToString()));
+            int speedmargin = Int32.Parse(Preferences.Get("SpeedGracePercent", PrefsFragment.default_speed_margin.ToString()));
             if (carspeed_kmh <= (int)(streetspeed_int * speedmargin / 100 + streetspeed_int))
             {
                 Serilog.Log.Debug($"Not Speeding - Done");
                 return;
             }
             Serilog.Log.Debug($"Show High Priority Notification");
-            NotificationCompat.Builder notificationBuilder = new(this, PrefsActivity.NOTIFICATION_CHANNEL_ID_HIGH);
+            NotificationCompat.Builder notificationBuilder = new(this, PrefsFragment.NOTIFICATION_CHANNEL_ID_HIGH);
             Notification notification = notificationBuilder
                 .SetAutoCancel(true)
                 .SetSmallIcon(Resource.Drawable.dyno)
@@ -569,14 +569,14 @@ namespace Velociraptor
                 .Build();
 
             NotificationManager? nManager = GetSystemService(Android.Content.Context.NotificationService) as NotificationManager;
-            nManager?.Notify(PrefsActivity.NOTIFICATION_ID_HIGH, notification);
+            nManager?.Notify(PrefsFragment.NOTIFICATION_ID_HIGH, notification);
 
             Serilog.Log.Debug($"Play a sound");
             var soundUri = RingtoneManager.GetDefaultUri(RingtoneType.Notification);
             var r = RingtoneManager.GetRingtone(Android.App.Application.Context, soundUri);
             r?.Play();
 
-            nManager?.Cancel(PrefsActivity.NOTIFICATION_ID_HIGH);
+            nManager?.Cancel(PrefsFragment.NOTIFICATION_ID_HIGH);
         }
     }
 }

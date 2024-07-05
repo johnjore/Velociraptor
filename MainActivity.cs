@@ -110,7 +110,7 @@ namespace Velociraptor
             //Location Service. Service checks if already running
             Serilog.Log.Debug($"MainActivity - Start LocationService");
             Intent locationServiceIntent = new(this, typeof(LocationForegroundService));
-            locationServiceIntent.SetAction(PrefsActivity.ACTION_START_SERVICE);
+            locationServiceIntent.SetAction(PrefsFragment.ACTION_START_SERVICE);
             if (OperatingSystem.IsAndroidVersionAtLeast(26))
             {
                 StartForegroundService(locationServiceIntent);
@@ -142,7 +142,10 @@ namespace Velociraptor
             if (id == Resource.Id.action_settings)
             {
                 Serilog.Log.Information($"Change to Settings");
-                StartActivity(new Intent(this, typeof(PrefsActivity)));
+                SetContentView(Resource.Layout.preferences);
+                var FragmentsTransaction = SupportFragmentManager.BeginTransaction();
+                FragmentsTransaction.Replace(Resource.Id.preference_container, new PrefsFragment());
+                FragmentsTransaction.Commit();
 
                 return true;
             }
@@ -175,6 +178,9 @@ namespace Velociraptor
             DrawerLayout? drawer = FindViewById<DrawerLayout>(Resource.Id.drawer_layout);
             if (drawer == null)
             {
+                //If in "Settings", jump back to MainActivity. Fix when MainActivity uses Fragments
+                StartActivity(new Intent(this, typeof(MainActivity)));
+
                 Serilog.Log.Error("drawer is null. Returning");
                 return;
             }
@@ -191,7 +197,7 @@ namespace Velociraptor
                 alert.SetPositiveButton(Resource.String.Yes, (sender, args) => {
                     //Location Service
                     Intent locationServiceIntent = new(this, typeof(LocationForegroundService));
-                    locationServiceIntent.SetAction(PrefsActivity.ACTION_STOP_SERVICE);
+                    locationServiceIntent.SetAction(PrefsFragment.ACTION_STOP_SERVICE);
                     StopService(locationServiceIntent);
 
                     Serilog.Log.CloseAndFlush();

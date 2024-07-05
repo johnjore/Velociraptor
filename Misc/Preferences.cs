@@ -2,13 +2,20 @@
 using Android.Locations;
 using Android.OS;
 using Android.Preferences;
+using Android.Views;
+using AndroidX;
+using AndroidX.Core.App;
+using AndroidX.Fragment;
+using AndroidX.Fragment.App;
+using AndroidX.Preference;
+using AndroidX.AppCompat.App;
 using System;
 using System.Text;
 
 namespace Velociraptor
 {
-    [Activity(Label = "preferences")]
-    public class PrefsActivity : PreferenceActivity
+    [Activity(Label = "settings")]
+    public class PrefsFragment : PreferenceFragmentCompat
     {
         //Location Service
         public const int SERVICE_RUNNING_NOTIFICATION_ID = 10005;
@@ -32,18 +39,9 @@ namespace Velociraptor
 
         public const int default_speed_margin = 3; //% of margin before speeding alarm
 
-        protected override void OnCreate(Bundle? savedInstanceState)
+        public override void OnCreatePreferences(Bundle? savedInstanceState, string? rootKey)
         {
-            base.OnCreate(savedInstanceState);
-            if (OperatingSystem.IsAndroidVersionAtLeast(29))
-            {
-                /**///Obsoleted in API 29
-                AddPreferencesFromResource(Resource.Xml.Preferences);
-            }
-            else if (OperatingSystem.IsAndroidVersionAtLeast(23))
-            {
-                AddPreferencesFromResource(Resource.Xml.Preferences);
-            }
+            SetPreferencesFromResource(Resource.Xml.Preferences, rootKey);
         }
     }
 }

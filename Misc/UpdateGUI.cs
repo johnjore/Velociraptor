@@ -32,13 +32,13 @@ namespace Velociraptor
             if (cLocation == null)
             {
                 Serilog.Log.Warning($"UpdateGUI - currentLocation is null, set all TextView fields to N/A");
-                MainActivity.txtlatitude.Text = Platform.AppContext.Resources.GetString(Resource.String.str_na);
-                MainActivity.txtlong.Text = Platform.AppContext.Resources.GetString(Resource.String.str_na);
-                MainActivity.txtspeed.Text = Platform.AppContext.Resources.GetString(Resource.String.str_na);
-                MainActivity.txtstreetname.Text = Platform.AppContext.Resources.GetString(Resource.String.str_na);
-                MainActivity.txtspeedlimit.Text = Platform.AppContext.Resources.GetString(Resource.String.str_na);
-                MainActivity.txtspeeding.Text = Platform.AppContext.Resources.GetString(Resource.String.str_na);
-                MainActivity.txtgpsdatetime.Text = Platform.AppContext.Resources.GetString(Resource.String.str_na);
+                MainActivity.txtlatitude.Text = Platform.AppContext?.Resources?.GetString(Resource.String.str_na);
+                MainActivity.txtlong.Text = Platform.AppContext?.Resources?.GetString(Resource.String.str_na);
+                MainActivity.txtspeed.Text = Platform.AppContext?.Resources?.GetString(Resource.String.str_na);
+                MainActivity.txtstreetname.Text = Platform.AppContext?.Resources?.GetString(Resource.String.str_na);
+                MainActivity.txtspeedlimit.Text = Platform.AppContext?.Resources?.GetString(Resource.String.str_na);
+                MainActivity.txtspeeding.Text = Platform.AppContext?.Resources?.GetString(Resource.String.str_na);
+                MainActivity.txtgpsdatetime.Text = Platform.AppContext?.Resources?.GetString(Resource.String.str_na);
                 return;
             }
 
@@ -126,25 +126,25 @@ namespace Velociraptor
             string streetSpeed = LocationForegroundService.GetStreetSpeed();
             if (streetSpeed == String.Empty || streetSpeed is null)
             {
-                MainActivity.txtspeedlimit.Text = Platform.AppContext.Resources.GetString(Resource.String.str_na);
+                MainActivity.txtspeedlimit.Text = Platform.AppContext?.Resources?.GetString(Resource.String.str_na);
             }
             else
             {
-                MainActivity.txtspeedlimit.Text = streetSpeed + " " + Platform.AppContext.Resources.GetString(Resource.String.str_kmh);
+                MainActivity.txtspeedlimit.Text = streetSpeed + " " + Platform.AppContext?.Resources?.GetString(Resource.String.str_kmh);
             }
 
             //GPS Speed?
             if (cLocation.HasSpeed == false)
             {
                 Serilog.Log.Debug($"UpdateGUI - No Speed information. Update GUI and return");
-                MainActivity.txtspeed.Text = Platform.AppContext.Resources.GetString(Resource.String.str_na);
+                MainActivity.txtspeed.Text = Platform.AppContext?.Resources?.GetString(Resource.String.str_na);
                 MainActivity.txtspeeding.Text = String.Empty;
 
                 return;
             }
 
             int carspeed_kmh = (int)(cLocation.Speed * 3.6);
-            MainActivity.txtspeed.Text = carspeed_kmh.ToString() + " " + Platform.AppContext.Resources.GetString(Resource.String.str_kmh);
+            MainActivity.txtspeed.Text = carspeed_kmh.ToString() + " " + Platform.AppContext?.Resources?.GetString(Resource.String.str_kmh);
 
             //If streetspeed is not defined, we can't calculate if car is speeding or not
             if (streetSpeed == String.Empty || streetSpeed is null)
@@ -161,14 +161,14 @@ namespace Velociraptor
                 return;
             }
 
-            int speedmargin = Int32.Parse(Preferences.Get("SpeedGracePercent", PrefsActivity.default_speed_margin.ToString()));
+            int speedmargin = Int32.Parse(Preferences.Get("SpeedGracePercent", PrefsFragment.default_speed_margin.ToString()));
             if (carspeed_kmh <= (int)(streetspeed_int * speedmargin / 100 + streetspeed_int))
             {
                 MainActivity.txtspeeding.Text = String.Empty;
             }
             else
             {
-                MainActivity.txtspeeding.Text = Platform.AppContext.Resources.GetString(Resource.String.str_speeding);
+                MainActivity.txtspeeding.Text = Platform.AppContext?.Resources?.GetString(Resource.String.str_speeding);
             }
         }
 
