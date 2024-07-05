@@ -11,7 +11,7 @@ namespace Velociraptor
 {
     internal class InitializeLocationData
     {
-        public static async Task InitializeOsmProvider(Activity activity)
+        public static async Task InitializeOsmProvider()
         {
             Serilog.Log.Debug("InitializeOSMProvider() - Start");
 

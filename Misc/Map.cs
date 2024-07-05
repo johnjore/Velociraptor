@@ -23,7 +23,7 @@ namespace Velociraptor
     {
         public static MapControl? mapControl = null;
 
-        public void CreateMap() 
+        public static void CreateMap() 
         {
             //Display the map
             if (mapControl != null)

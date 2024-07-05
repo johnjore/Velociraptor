@@ -30,10 +30,11 @@ namespace Velociraptor
                 Console.WriteLine(output);
             }
 
-            var options = new JsonSerializerOptions
+            JsonSerializerOptions jsonSerializerOptions = new()
             {
                 PropertyNameCaseInsensitive = true
             };
+            var options = jsonSerializerOptions;
 
             AzureMapData? azureMapData = JsonSerializer.Deserialize<AzureMapData>(output, options);
             var azureSpeedLimits = azureMapData?.Addresses?.Select(x => x.Address?.SpeedLimit).ToArray();

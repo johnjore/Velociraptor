@@ -105,7 +105,7 @@ namespace Velociraptor
             mapControl = FindViewById<MapControl>(Resource.Id.mapcontrol);
 
             Serilog.Log.Debug($"MainActivity - Initilize OSM Provider");
-            _ = InitializeLocationData.InitializeOsmProvider(this);
+            _ = InitializeLocationData.InitializeOsmProvider();
 
             //Location Service. Service checks if already running
             Serilog.Log.Debug($"MainActivity - Start LocationService");

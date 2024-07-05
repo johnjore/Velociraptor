@@ -92,7 +92,7 @@ namespace Velociraptor
             Task.Run(() => ProcessLocationData(location, DateTime.Now));
 
             //Foreground?
-            ActivityManager.RunningAppProcessInfo appProcessInfo = new ActivityManager.RunningAppProcessInfo();
+            ActivityManager.RunningAppProcessInfo appProcessInfo = new();
             ActivityManager.GetMyMemoryState(appProcessInfo);
             bool inForeground = (appProcessInfo.Importance == Importance.Foreground || appProcessInfo.Importance == Importance.Visible);
 
