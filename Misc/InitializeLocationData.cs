@@ -29,14 +29,14 @@ namespace Velociraptor
                 return;
             }
 
-            if (MainActivity.txtcountryname is null)
+            if (UpdateScreen.txtcountryname is null)
             {
                 Serilog.Log.Error($"txtcountryname is null. Returning");
                 return;
             }
 
             //Clear GUI field
-            MainActivity.txtcountryname.Text = String.Empty;
+            UpdateScreen.txtcountryname.Text = String.Empty;
 
             var service = new CountryReverseGeocodeService();
             var gLocation = new GeoLocation { Latitude = cLocation.Latitude, Longitude = cLocation.Longitude };

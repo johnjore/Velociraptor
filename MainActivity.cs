@@ -1,33 +1,29 @@
 using Android;
+using Android.Content;
+using Android.Content.PM;
+using Android.Content.Res;
 using Android.Locations;
 using Android.Media;
 using Android.OS;
 using Android.Runtime;
 using Android.Util;
 using Android.Widget;
-using Android.Content;
-using Android.Content.PM;
 using Android.Views;
+using AndroidX.AppCompat.App;
 using AndroidX.Core.View;
 using AndroidX.DrawerLayout.Widget;
-using AndroidX.AppCompat.App;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
-using Xamarin.Essentials;
+using AndroidX.Fragment.App;
+using Google.Android.Material.FloatingActionButton;
+using Google.Android.Material.Navigation;
+using Google.Android.Material.Snackbar;
 using Microsoft.AppCenter;
 using Microsoft.AppCenter.Analytics;
 using Microsoft.AppCenter.Crashes;
 using Serilog;
 using Serilog.Core;
 using Serilog.Sink.AppCenter;
-using Google.Android.Material.Navigation;
-using Mapsui.UI.Android;
 using TelegramSink;
-using Android.Content.Res;
-using AndroidX.Fragment.App;
-using Google.Android.Material.FloatingActionButton;
-using Google.Android.Material.Snackbar;
+using Xamarin.Essentials;
 
 namespace Velociraptor
 {
@@ -36,18 +32,6 @@ namespace Velociraptor
     {
         // Debugging
         public static string? TAG { get; private set; }
-
-        // GUI
-        public static TextView? txtlatitude = null;
-        public static TextView? txtlong = null;
-        public static TextView? txtspeed = null;
-        public static TextView? txtstreetname = null;
-        public static TextView? txtspeedlimit = null;
-        public static TextView? txtspeeding = null;
-        public static TextView? txtgpsdatetime = null;
-        public static TextView? txtlastupdated = null;
-        public static TextView? txtcountryname = null;
-        public static MapControl? mapControl = null;
 
         protected override async void OnCreate(Bundle? savedInstanceState)
         {
@@ -65,7 +49,7 @@ namespace Velociraptor
 
             Serilog.Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Debug()
-                .Enrich.WithProperty(Serilog.Core.Constants.SourceContextPropertyName, "velociraptor")
+                .Enrich.WithProperty(Serilog.Core.Constants.SourceContextPropertyName, "@string/app_name")
                 .WriteTo.AppCenterSink(null, Serilog.Events.LogEventLevel.Warning, AppCenterTarget.ExceptionsAsCrashes, appCenterApiKey)
                 .WriteTo.AndroidLog()
                 //.WriteTo.TeleSink(telegramApiKey: telegramApiKey, telegramChatId: telegramChatId)
@@ -91,18 +75,6 @@ namespace Velociraptor
 
             Serilog.Log.Debug($"Notify user if location permission does not allow background collection");
             await AppPermissions.LocationPermissionNotification(this);
-
-
-            txtlatitude = FindViewById<TextView>(Resource.Id.txtlatitude);
-            txtlong = FindViewById<TextView>(Resource.Id.txtlong);
-            txtspeed = FindViewById<TextView>(Resource.Id.txtspeed);
-            txtspeeding = FindViewById<TextView>(Resource.Id.txtspeeding);
-            txtstreetname = FindViewById<TextView>(Resource.Id.txtstreetname);
-            txtspeedlimit = FindViewById<TextView>(Resource.Id.txtspeedlimit);
-            txtgpsdatetime = FindViewById<TextView>(Resource.Id.txtgpsdatetime);
-            txtlastupdated = FindViewById<TextView>(Resource.Id.txtlastupdated);
-            txtcountryname = FindViewById<TextView>(Resource.Id.txtcountryname);
-            mapControl = FindViewById<MapControl>(Resource.Id.mapcontrol);
 
             Serilog.Log.Debug($"MainActivity - Initilize OSM Provider");
             _ = InitializeLocationData.InitializeOsmProvider();

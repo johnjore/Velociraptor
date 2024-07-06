@@ -8,22 +8,71 @@ using Microsoft.AppCenter;
 using Microsoft.AppCenter.Analytics;
 using Microsoft.AppCenter.Crashes;
 using Xamarin.Essentials;
+using Mapsui.UI.Android;
+
+using Android;
+using Android.Locations;
+using Android.Media;
+using Android.OS;
+using Android.Runtime;
+using Android.Util;
+using Android.Widget;
+using Android.Content;
+using Android.Content.PM;
+using Android.Views;
+using AndroidX.Core.View;
+using AndroidX.DrawerLayout.Widget;
+using AndroidX.AppCompat.App;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
+using Serilog.Sink.AppCenter;
+using Google.Android.Material.Navigation;
+using TelegramSink;
+using AndroidX.Fragment.App;
+using Google.Android.Material.FloatingActionButton;
+using Google.Android.Material.Snackbar;
+
 
 namespace Velociraptor
 {
     internal class UpdateScreen
     {
+        // GUI
+        public static TextView? txtlatitude = null;
+        public static TextView? txtlong = null;
+        public static TextView? txtspeed = null;
+        public static TextView? txtstreetname = null;
+        public static TextView? txtspeedlimit = null;
+        public static TextView? txtspeeding = null;
+        public static TextView? txtgpsdatetime = null;
+        public static TextView? txtlastupdated = null;
+        public static TextView? txtcountryname = null;
+        public static MapControl? mapControl = null;
+
         public static void UpdateGUI(Android.Locations.Location? cLocation)
         {
-            if ((MainActivity.txtlatitude is null) ||
-                (MainActivity.txtlong is null) ||
-                (MainActivity.txtspeed is null) ||
-                (MainActivity.txtstreetname is null) ||
-                (MainActivity.txtspeedlimit is null) ||
-                (MainActivity.txtspeeding is null) ||
-                (MainActivity.txtgpsdatetime is null) ||
-                (MainActivity.txtlastupdated is null) ||
-                (MainActivity.mapControl is null)) 
+            var cActivity = Platform.CurrentActivity;
+            txtlatitude = cActivity.FindViewById<TextView>(Resource.Id.txtlatitude);
+            txtlong = cActivity.FindViewById<TextView>(Resource.Id.txtlong);
+            txtspeed = cActivity.FindViewById<TextView>(Resource.Id.txtspeed);
+            txtspeeding = cActivity.FindViewById<TextView>(Resource.Id.txtspeeding);
+            txtstreetname = cActivity.FindViewById<TextView>(Resource.Id.txtstreetname);
+            txtspeedlimit = cActivity.FindViewById<TextView>(Resource.Id.txtspeedlimit);
+            txtgpsdatetime = cActivity.FindViewById<TextView>(Resource.Id.txtgpsdatetime);
+            txtlastupdated = cActivity.FindViewById<TextView>(Resource.Id.txtlastupdated);
+            txtcountryname = cActivity.FindViewById<TextView>(Resource.Id.txtcountryname);
+            mapControl = cActivity.FindViewById<MapControl>(Resource.Id.mapcontrol);
+
+            if ((txtlatitude is null) ||
+                (txtlong is null) ||
+                (txtspeed is null) ||
+                (txtstreetname is null) ||
+                (txtspeedlimit is null) ||
+                (txtspeeding is null) ||
+                (txtgpsdatetime is null) ||
+                (txtlastupdated is null) ||
+                (mapControl is null)) 
             {
                 Serilog.Log.Error($"UpdateGUI - One or more GUI objects are null");
                 return;
@@ -32,23 +81,23 @@ namespace Velociraptor
             if (cLocation == null)
             {
                 Serilog.Log.Warning($"UpdateGUI - currentLocation is null, set all TextView fields to N/A");
-                MainActivity.txtlatitude.Text = Platform.AppContext?.Resources?.GetString(Resource.String.str_na);
-                MainActivity.txtlong.Text = Platform.AppContext?.Resources?.GetString(Resource.String.str_na);
-                MainActivity.txtspeed.Text = Platform.AppContext?.Resources?.GetString(Resource.String.str_na);
-                MainActivity.txtstreetname.Text = Platform.AppContext?.Resources?.GetString(Resource.String.str_na);
-                MainActivity.txtspeedlimit.Text = Platform.AppContext?.Resources?.GetString(Resource.String.str_na);
-                MainActivity.txtspeeding.Text = Platform.AppContext?.Resources?.GetString(Resource.String.str_na);
-                MainActivity.txtgpsdatetime.Text = Platform.AppContext?.Resources?.GetString(Resource.String.str_na);
+                txtlatitude.Text = cActivity.Resources?.GetString(Resource.String.str_na);
+                txtlong.Text = cActivity.Resources?.GetString(Resource.String.str_na);
+                txtspeed.Text = cActivity.Resources?.GetString(Resource.String.str_na);
+                txtstreetname.Text = cActivity.Resources?.GetString(Resource.String.str_na);
+                txtspeedlimit.Text = cActivity.Resources?.GetString(Resource.String.str_na);
+                txtspeeding.Text = cActivity.Resources?.GetString(Resource.String.str_na);
+                txtgpsdatetime.Text = cActivity.Resources?.GetString(Resource.String.str_na);
                 return;
             }
 
             //Updated
-            MainActivity.txtlastupdated.Text = (DateTime.Now).ToString("HH:mm:ss");
+            txtlastupdated.Text = (DateTime.Now).ToString("HH:mm:ss");
 
             //GPS Information
             Serilog.Log.Debug($"UpdateGUI - Update GPS related TextView fields");
-            MainActivity.txtlatitude.Text = cLocation.Latitude.ToString("0.00000");
-            MainActivity.txtlong.Text = cLocation.Longitude.ToString("0.00000");
+            txtlatitude.Text = cLocation.Latitude.ToString("0.00000");
+            txtlong.Text = cLocation.Longitude.ToString("0.00000");
 
             /*
             //Update map
@@ -108,7 +157,7 @@ namespace Velociraptor
             }
             finally
             {
-                MainActivity.txtgpsdatetime.Text = gpslocalDateTime.ToString("HH:mm:ss");
+                txtgpsdatetime.Text = gpslocalDateTime.ToString("HH:mm:ss");
             }
 
             //Update GUI with OSM data (streetname and street max speed)
@@ -116,47 +165,47 @@ namespace Velociraptor
             var streetName = LocationForegroundService.GetStreetname();
             if (streetName == String.Empty || streetName is null)
             {
-                MainActivity.txtstreetname.Text = "Unknown street/road";
+                txtstreetname.Text = "Unknown street/road";
             }
             else
             {
-                MainActivity.txtstreetname.Text = streetName;
+                txtstreetname.Text = streetName;
             }
 
             string streetSpeed = LocationForegroundService.GetStreetSpeed();
             if (streetSpeed == String.Empty || streetSpeed is null)
             {
-                MainActivity.txtspeedlimit.Text = Platform.AppContext?.Resources?.GetString(Resource.String.str_na);
+                txtspeedlimit.Text = Platform.AppContext?.Resources?.GetString(Resource.String.str_na);
             }
             else
             {
-                MainActivity.txtspeedlimit.Text = streetSpeed + " " + Platform.AppContext?.Resources?.GetString(Resource.String.str_kmh);
+                txtspeedlimit.Text = streetSpeed + " " + cActivity.Resources?.GetString(Resource.String.str_kmh);
             }
 
             //GPS Speed?
             if (cLocation.HasSpeed == false)
             {
                 Serilog.Log.Debug($"UpdateGUI - No Speed information. Update GUI and return");
-                MainActivity.txtspeed.Text = Platform.AppContext?.Resources?.GetString(Resource.String.str_na);
-                MainActivity.txtspeeding.Text = String.Empty;
+                txtspeed.Text = Platform.AppContext?.Resources?.GetString(Resource.String.str_na);
+                txtspeeding.Text = String.Empty;
 
                 return;
             }
 
             int carspeed_kmh = (int)(cLocation.Speed * 3.6);
-            MainActivity.txtspeed.Text = carspeed_kmh.ToString() + " " + Platform.AppContext?.Resources?.GetString(Resource.String.str_kmh);
+            txtspeed.Text = carspeed_kmh.ToString() + " " + Platform.AppContext?.Resources?.GetString(Resource.String.str_kmh);
 
             //If streetspeed is not defined, we can't calculate if car is speeding or not
             if (streetSpeed == String.Empty || streetSpeed is null)
             {
-                MainActivity.txtspeeding.Text = String.Empty;
+                txtspeeding.Text = String.Empty;
                 return;
             }
 
             if (Int32.TryParse(streetSpeed, out int streetspeed_int) == false)
             {
                 Serilog.Log.Error($"UpdateGUI - Failed to convert streetspeed string to int. Clear speeding field and return");
-                MainActivity.txtspeeding.Text = String.Empty;
+                txtspeeding.Text = String.Empty;
 
                 return;
             }
@@ -164,11 +213,11 @@ namespace Velociraptor
             int speedmargin = Int32.Parse(Preferences.Get("SpeedGracePercent", PrefsFragment.default_speed_margin.ToString()));
             if (carspeed_kmh <= (int)(streetspeed_int * speedmargin / 100 + streetspeed_int))
             {
-                MainActivity.txtspeeding.Text = String.Empty;
+                txtspeeding.Text = String.Empty;
             }
             else
             {
-                MainActivity.txtspeeding.Text = Platform.AppContext?.Resources?.GetString(Resource.String.str_speeding);
+                txtspeeding.Text = Platform.AppContext?.Resources?.GetString(Resource.String.str_speeding);
             }
         }
 
