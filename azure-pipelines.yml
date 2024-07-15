@@ -1,0 +1,46 @@
+# Xamarin.Android
+# https://docs.microsoft.com/azure/devops/pipelines/languages/xamarin
+
+trigger:
+- master
+
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  buildConfiguration: 'Release'
+  outputDirectory: '$(build.binariesDirectory)/$(buildConfiguration)'
+
+steps:
+- task: NuGetToolInstaller@1
+
+- task: NuGetCommand@2
+  inputs:
+    restoreSolution: '**/*.sln'
+
+- task: android-manifest-version@1
+  inputs:
+    sourcePath: './AndroidManifest.xml'
+    versionCodeOption: 'timestamp'
+    printFile: true
+
+- task: XamarinAndroid@1
+  inputs:
+    projectFile: '**/hajk.csproj'
+    outputDirectory: '$(outputDirectory)'
+    configuration: '$(buildConfiguration)'
+    msbuildVersionOption: 'latest'
+    jdkOption: 'JDKVersion'
+    jdkVersionOption: '1.11'
+
+- task: AndroidSigning@3
+  inputs:
+      apkFiles: '$(outputDirectory)\*.apk'
+      apksignerKeystoreFile: 'velociraptor.keystore'
+      apksignerKeystorePassword: '$(Keystore_Password)'
+      apksignerKeystoreAlias: 'Kala'
+      apksignerKeyPassword: '$(Keystore_Password)'
+
+- task: PublishBuildArtifacts@1
+  inputs:
+      pathtoPublish: '$(outputDirectory)'
