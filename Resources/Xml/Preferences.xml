@@ -7,5 +7,12 @@
 			android:inputType="numberDecimal"
 			android:digits="0123456789"
 			android:defaultValue="3" />
+
+    <SwitchPreference
+			android:title="@string/UseInternet_Title"
+			android:summary="@string/UseInternet_Summary"
+			android:key="UseMobileData"
+			android:defaultValue="false" />
+
   </PreferenceCategory>
 </PreferenceScreen>

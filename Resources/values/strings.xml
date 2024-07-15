@@ -27,4 +27,6 @@
   <string name="str_GPSDateTime">GPS DateTime</string>
   <string name="SpeedGracePercent">Speed alarm grace in %</string>
   <string name="str_countryfile_name">OSM filename</string>
+  <string name="UseInternet_Title">Enable Mobile Data Usage</string>
+  <string name="UseInternet_Summary">Download map tiles using mobile data</string>
 </resources>

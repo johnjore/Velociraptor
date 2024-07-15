@@ -92,6 +92,9 @@ namespace Velociraptor
                 StartService(locationServiceIntent);
             }
 
+            //Create/Initialize Map
+            Map.CreateMap();
+
             //Disable battery optimization
             BatteryOptimization.SetDozeOptimization(this);
         }

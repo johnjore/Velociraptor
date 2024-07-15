@@ -32,6 +32,11 @@ using TelegramSink;
 using AndroidX.Fragment.App;
 using Google.Android.Material.FloatingActionButton;
 using Google.Android.Material.Snackbar;
+using Mapsui.Projections;
+using Mapsui;
+using Mapsui.Extensions;
+using Mapsui.Layers;
+using Mapsui.Styles;
 
 
 namespace Velociraptor
@@ -62,7 +67,7 @@ namespace Velociraptor
             txtgpsdatetime = cActivity.FindViewById<TextView>(Resource.Id.txtgpsdatetime);
             txtlastupdated = cActivity.FindViewById<TextView>(Resource.Id.txtlastupdated);
             txtcountryname = cActivity.FindViewById<TextView>(Resource.Id.txtcountryname);
-            mapControl = cActivity.FindViewById<MapControl>(Resource.Id.mapcontrol);
+            //mapControl = cActivity.FindViewById<MapControl>(Resource.Id.mapcontrol);
 
             if ((txtlatitude is null) ||
                 (txtlong is null) ||
@@ -71,8 +76,7 @@ namespace Velociraptor
                 (txtspeedlimit is null) ||
                 (txtspeeding is null) ||
                 (txtgpsdatetime is null) ||
-                (txtlastupdated is null) ||
-                (mapControl is null)) 
+                (txtlastupdated is null)) 
             {
                 Serilog.Log.Error($"UpdateGUI - One or more GUI objects are null");
                 return;
@@ -98,50 +102,6 @@ namespace Velociraptor
             Serilog.Log.Debug($"UpdateGUI - Update GPS related TextView fields");
             txtlatitude.Text = cLocation.Latitude.ToString("0.00000");
             txtlong.Text = cLocation.Longitude.ToString("0.00000");
-
-            /*
-            //Update map
-            if (MainActivity.mapControl is not null)
-            {
-                var (x, y) = SphericalMercator.FromLonLat(currentLocation.Longitude, currentLocation.Latitude);
-                //MainActivity.mapControl.Map.Home = n => n.CenterOnAndZoomTo(new MPoint(x, y), n.Resolutions[17]);  //0 zoomed out-19 zoomed in
-                MainActivity.mapControl.Map.Navigator.CenterOnAndZoomTo(new MPoint(x, y), 1);
-
-                //Rotate map so it matches direction of travel
-                if (currentLocation.HasBearing)
-                {
-                    if (OperatingSystem.IsAndroidVersionAtLeast(26))
-                    {
-                        if (currentLocation.HasBearingAccuracy)
-                        {
-                            MainActivity.mapControl.Rotation = currentLocation.Bearing;
-                        }
-                    }
-                    else
-                    {
-                        MainActivity.mapControl.Rotation = currentLocation.Bearing;
-                    }
-                }
-                else
-                {
-                    MainActivity.mapControl.Rotation = 0;
-                }
-                */
-
-            /*
-            Point? sphericalMercatorCoordinate = null;
-            ILayer layer = MainActivity.mapControl.Map.Layers.FindLayer(PrefsActivity.LocationLayerName).FirstOrDefault();
-            if (layer == null)
-            {
-                MainActivity.mapControl.Map.Layers.Add(CreateLocationLayer(sphericalMercatorCoordinate));
-                layer = MainActivity.mapControl.Map.Layers.FindLayer(PrefsActivity.LocationLayerName).FirstOrDefault();
-            }
-
-
-            MainActivity.mapControl.Map.Refresh();
-            MainActivity.mapControl.Refresh();
-        }
-        */
 
             //Convert GPS time in ms since epoch in UTC to local datetime
             DateTime gpslocalDateTime = default;
@@ -221,50 +181,5 @@ namespace Velociraptor
             }
         }
 
-        /*
-        public static ILayer CreateLocationLayer(Point GPSLocation)
-        {
-            
-            return new MemoryLayer
-            {
-                Name = PrefsActivity.LocationLayerName,
-                DataSource = CreateMemoryProviderWithDiverseSymbols(GPSLocation),
-                Style = null,
-                IsMapInfoLayer = true
-            };
-        }
-        */
-        /*
-        private static MemoryProvider CreateMemoryProviderWithDiverseSymbols(Point GPSLocation)
-        {
-            return new MemoryProvider(CreateLocationMarker(GPSLocation));
-        }
-        */
-        /*
-        private static GeometryFeature CreateLocationMarker(Point GPSLocation)
-        {
-            var features = new GeometryFeature
-            {
-                CreateLocationFeature(GPSLocation)
-            };
-            return features;
-        }
-        */
-        /*
-        private static IFeature CreateLocationFeature(Point GPSLocation)
-        {
-            
-            var feature = new GeometryFeature { Geometry = GPSLocation };
-            
-            feature.Styles.Add(new SymbolStyle
-            {
-                SymbolScale = 1.5f,
-                Fill = null,
-                Outline = new Pen { Color = Mapsui.Styles.Color.Blue, Width = 2.0 }
-            });
-            
-            return feature;            
-        }
-        */        
     }
 }

@@ -88,14 +88,17 @@
     <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
     <PackageReference Include="Serilog.Sinks.Telegram" Version="0.2.1" />
     <PackageReference Include="Serilog.Sinks.Xamarin" Version="1.0.0" />
-    <PackageReference Include="System.Text.Json" Version="8.0.3" />
-    <PackageReference Include="Xamarin.AndroidX.LocalBroadcastManager" Version="1.1.0.14" />
-    <PackageReference Include="Xamarin.AndroidX.Preference" Version="1.2.1.7" />
+    <PackageReference Include="sqlite-net-pcl" Version="1.9.172" />
+    <PackageReference Include="System.Text.Json" Version="8.0.4" />
+    <PackageReference Include="Wibci.CountryReverseGeocode" Version="2.1.0" />
+    <PackageReference Include="Xamarin.AndroidX.LocalBroadcastManager" Version="1.1.0.15" />
+    <PackageReference Include="Xamarin.AndroidX.Preference" Version="1.2.1.8" />
     <PackageReference Include="Xamarin.Essentials" Version="1.8.1" />
-    <PackageReference Include="Xamarin.Google.Android.Material" Version="1.11.0" />
+    <PackageReference Include="Xamarin.Google.Android.Material" Version="1.11.0.1" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Assets\" />
+    <Folder Include="Libraries\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Wibci.CountryReverseGeocode\Wibci.CountryReverseGeocode\Wibci.CountryReverseGeocode.csproj" />

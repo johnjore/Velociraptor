@@ -17,7 +17,17 @@ namespace Velociraptor
     [Activity(Label = "settings")]
     public class PrefsFragment : PreferenceFragmentCompat
     {
-        //Location Service
+        //Misc
+        public readonly static string rootPath = System.Environment.GetFolderPath(System.Environment.SpecialFolder.Personal);
+
+        //Map
+        public const string CacheDB = "CacheDB.mbtiles";    //Database to store offline tiles
+        public const int MinZoom = 0;                       //MinZoom level to use
+        public const int MaxZoom = 16;                      //MaxZoom level to use
+        public const int OfflineMaxAge = 90;                //Don't refresh tiles until this threashhold in days        
+        public const string LocationLayerName = "Location";
+
+        //Foreground Service
         public const int SERVICE_RUNNING_NOTIFICATION_ID = 10005;
         public const string NOTIFICATION_CHANNEL_ID = "no.jore.velociraptor.service";
         public const string channelName = "App Service";
@@ -33,10 +43,7 @@ namespace Velociraptor
         public const int intTimer = 2000;   //How often to get new location
         public const int intDistance = 0;   //Minimum distance for new location
 
-
-        //Map
-        public const string LocationLayerName = "Location";
-
+        //Speeding
         public const int default_speed_margin = 3; //% of margin before speeding alarm
 
         public override void OnCreatePreferences(Bundle? savedInstanceState, string? rootKey)

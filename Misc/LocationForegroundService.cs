@@ -98,6 +98,10 @@ namespace Velociraptor
 
             if (inForeground)
             {
+                //Update map
+                Task.Run(() => Map.UpdateLocationMarker(location));
+
+                //Update Text fields
                 Task.Run(() => UpdateScreen.UpdateGUI(location));
             }
         }
@@ -259,6 +263,10 @@ namespace Velociraptor
 
                     isStarted = true;
                     RegisterForegroundService();
+
+
+                    //Zoom in on Map
+                    Map.GetMap().Navigator.ZoomToLevel(PrefsFragment.MaxZoom);
                 }
             }
             else if (intent.Action.Equals(PrefsFragment.ACTION_STOP_SERVICE))
