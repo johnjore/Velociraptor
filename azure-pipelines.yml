@@ -26,7 +26,7 @@ steps:
 
 - task: XamarinAndroid@1
   inputs:
-    projectFile: '**/hajk.csproj'
+    projectFile: '**/velociraptor.csproj'
     outputDirectory: '$(outputDirectory)'
     configuration: '$(buildConfiguration)'
     msbuildVersionOption: 'latest'
