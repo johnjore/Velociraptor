@@ -152,7 +152,7 @@ namespace Velociraptor
 
                     if (sqlConn == null)
                     {
-                        return Array.Empty<byte>();
+                        return null;
                     }
 
                     lock (sqlConn)
@@ -163,7 +163,7 @@ namespace Velociraptor
                             /**///if ((DateTime.UtcNow - oldTile.createDate).TimeSpan.TotalDays >= Fragment_Preferences.OfflineMaxAge)
                             if (oldTile.tile_data == null)
                             {
-                                return Array.Empty<byte>();
+                                return null;
                             }
                             else
                             {
@@ -177,7 +177,7 @@ namespace Velociraptor
                     Serilog.Log.Error(ex, $"TileCache - Find()");
                 }
 
-                return Array.Empty<byte>();
+                return null;
             }
 
             public void Remove(TileIndex index)
