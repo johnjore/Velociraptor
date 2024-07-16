@@ -22,8 +22,13 @@ namespace Velociraptor
             {
                 mbTileCache ??= new MbTileCache(cacheFilename, "png");
 
+                //Wifi?
+                bool wifiConnection = Connectivity.ConnectionProfiles.Contains(ConnectionProfile.WiFi);
+
+                //Mobile data allowed?
                 bool enableMobileData = Preferences.Get("UseMobileData", false);
-                if (enableMobileData)
+
+                if (wifiConnection || enableMobileData)
                 {
                     HttpTileSource src = new(new GlobalSphericalMercator(Fragment_Preferences.MinZoom, Fragment_Preferences.MaxZoom),
                         "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", 

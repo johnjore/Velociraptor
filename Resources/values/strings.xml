@@ -25,7 +25,7 @@
   <string name="Ok">Ok</string>
   <string name="str_status">Status</string>
   <string name="str_lastupdated">Last Updated</string>
-  <string name="str_GPSDateTime">GPS DateTime</string>
+  <string name="str_GPSDateTime">GPS DT</string>
   <string name="SpeedGracePercent">Speed alarm grace in %</string>
   <string name="str_countryfile_name">OSM filename</string>
   <string name="UseInternet_Title">Enable Mobile Data Usage</string>
