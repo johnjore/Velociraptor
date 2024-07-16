@@ -22,5 +22,12 @@
         android:layout_height="match_parent" 
         android:layout_weight="1" >
     </FrameLayout>
- 
+
+    <FrameLayout
+        android:id="@+id/fragment_container_preference"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" >
+    </FrameLayout>
+
 </LinearLayout>

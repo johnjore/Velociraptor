@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using Android;
 using Android.Content;
 using Android.Content.PM;
@@ -87,7 +89,7 @@ namespace Velociraptor
                     .Add(Resource.Id.fragment_container_text, new Fragment_Text(), Fragment_Preferences.Fragment_Text)
                     .Commit();
             }
-
+            
             Serilog.Log.Debug($"MainActivity - Initilize OSM Provider");
             _ = InitializeLocationData.InitializeOsmProvider();
 
@@ -126,9 +128,13 @@ namespace Velociraptor
             if (id == Resource.Id.action_settings)
             {
                 Serilog.Log.Information($"Change to Settings");
-                SetContentView(Resource.Layout.preferences);
+
+                /**///Make it visible. Fix later with better layout
+                FindViewById<FrameLayout>(Resource.Id.fragment_container_preference).Visibility = ViewStates.Visible;
+
                 SupportFragmentManager.BeginTransaction()
-                    .Replace(Resource.Id.preference_container, new Fragment_Preferences(), Fragment_Preferences.Fragment_Settings)
+                    .SetReorderingAllowed(true)
+                    .Add(Resource.Id.fragment_container_preference, new Fragment_Preferences(), Fragment_Preferences.Fragment_Settings)
                     .AddToBackStack(null)
                     .Commit();
 
@@ -163,10 +169,6 @@ namespace Velociraptor
             DrawerLayout? drawer = FindViewById<DrawerLayout>(Resource.Id.drawer_layout);
             if (drawer == null)
             {
-                //If in "Settings", jump back to MainActivity. Fix when MainActivity uses Fragments
-                StartActivity(new Intent(this, typeof(MainActivity)));
-
-                Serilog.Log.Error("drawer is null. Returning");
                 return;
             }
 
@@ -176,26 +178,37 @@ namespace Velociraptor
             }
             else
             {
-                using var alert = new Android.App.AlertDialog.Builder(Platform.CurrentActivity);
-                alert.SetTitle(Platform.CurrentActivity?.Resources?.GetString(Resource.String.ExitTitle));
-                alert.SetMessage(Platform.CurrentActivity?.Resources?.GetString(Resource.String.ExitPrompt));
-                alert.SetPositiveButton(Resource.String.Yes, (sender, args) => {
-                    //Location Service
-                    Intent locationServiceIntent = new(this, typeof(LocationForegroundService));
-                    locationServiceIntent.SetAction(Fragment_Preferences.ACTION_STOP_SERVICE);
-                    StopService(locationServiceIntent);
-
-                    Serilog.Log.CloseAndFlush();
-                    Platform.CurrentActivity?.FinishAffinity();
-                });
-                alert.SetNegativeButton(Resource.String.No, (sender, args) => { });
-
-                var dialog = alert.Create();
-                dialog?.Show();
-
-                if (!OperatingSystem.IsAndroidVersionAtLeast(33))
+                var c = SupportFragmentManager.FindFragmentByTag(Fragment_Preferences.Fragment_Settings);
+                if (SupportFragmentManager.Fragments.Contains(c))
                 {
-                    base.OnBackPressed();
+                    SupportFragmentManager.BeginTransaction().Remove(c).Commit();
+
+                    /**///Make it Gone. Fix later with better layout
+                    FindViewById<FrameLayout>(Resource.Id.fragment_container_preference).Visibility = ViewStates.Gone;
+                }
+                else 
+                {
+                    using var alert = new Android.App.AlertDialog.Builder(Platform.CurrentActivity);
+                    alert.SetTitle(Platform.CurrentActivity?.Resources?.GetString(Resource.String.ExitTitle));
+                    alert.SetMessage(Platform.CurrentActivity?.Resources?.GetString(Resource.String.ExitPrompt));
+                    alert.SetPositiveButton(Resource.String.Yes, (sender, args) => {
+                        //Location Service
+                        Intent locationServiceIntent = new(this, typeof(LocationForegroundService));
+                        locationServiceIntent.SetAction(Fragment_Preferences.ACTION_STOP_SERVICE);
+                        StopService(locationServiceIntent);
+
+                        Serilog.Log.CloseAndFlush();
+                        Platform.CurrentActivity?.FinishAffinity();
+                    });
+                    alert.SetNegativeButton(Resource.String.No, (sender, args) => { });
+
+                    var dialog = alert.Create();
+                    dialog?.Show();
+
+                    if (!OperatingSystem.IsAndroidVersionAtLeast(33))
+                    {
+                        base.OnBackPressed();
+                    }
                 }
             }
         }

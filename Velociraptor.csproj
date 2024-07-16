@@ -38,7 +38,6 @@
     <None Remove="Resources\layout\fragment_map.xml" />
     <None Remove="Resources\layout\fragment_text.xml" />
     <None Remove="Resources\layout\nav_header_main.xml" />
-    <None Remove="Resources\layout\Preferences.xml" />
     <None Remove="Resources\menu\activity_main_drawer.xml" />
     <None Remove="Resources\menu\menu_main.xml" />
     <None Remove="Resources\mipmap-anydpi-v26\ic_launcher.xml" />
@@ -99,7 +98,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Assets\" />
-    <Folder Include="Libraries\" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Wibci.CountryReverseGeocode\Wibci.CountryReverseGeocode\Wibci.CountryReverseGeocode.csproj" />
