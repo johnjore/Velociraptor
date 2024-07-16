@@ -15,11 +15,9 @@ using Mapsui.Tiling.Layers;
 using Mapsui.UI;
 using Mapsui.UI.Android;
 using Mapsui.Utilities;
-using NetTopologySuite.Geometries;
 using Serilog;
 using SQLite;
 using Xamarin.Essentials;
-using BruTile.Wms;
 
 namespace Velociraptor
 {
@@ -27,7 +25,7 @@ namespace Velociraptor
     {
         public static void UpdateLocationMarker(Android.Locations.Location? cLocation)
         {
-            var map = Fragments.Fragment_map.GetMap();
+            var map = Fragments.Fragment_Map.GetMap();
 
             if (map == null || cLocation == null)
             {
@@ -43,7 +41,7 @@ namespace Velociraptor
             }
 
             //Update marker
-            ILayer? layer = map.Layers.FindLayer(Fragment_Preferences.LocationLayerName).FirstOrDefault();
+            ILayer? layer = map.Layers.FindLayer(Fragments.Fragment_Preferences.LocationLayerName).FirstOrDefault();
             if (layer != null)
             {
                 map.Layers.Remove(layer);
@@ -55,7 +53,7 @@ namespace Velociraptor
         {
             return new MemoryLayer
             {
-                Name = Fragment_Preferences.LocationLayerName,
+                Name = Fragments.Fragment_Preferences.LocationLayerName,
                 Features = CreateLocationFeatures(GPSLocation),
                 Style = null,
                 IsMapInfoLayer = true

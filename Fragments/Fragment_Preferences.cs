@@ -12,7 +12,7 @@ using AndroidX.AppCompat.App;
 using System;
 using System.Text;
 
-namespace Velociraptor
+namespace Velociraptor.Fragments
 {
     [Activity(Label = "settings")]
     public class Fragment_Preferences : PreferenceFragmentCompat

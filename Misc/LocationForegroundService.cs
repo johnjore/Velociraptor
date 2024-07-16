@@ -25,6 +25,7 @@ using Xamarin.Essentials;
 using Random = System.Random;
 using Wibci.CountryReverseGeocode.Models;
 using Wibci.CountryReverseGeocode;
+using Velociraptor.Fragments;
 
 namespace Velociraptor
 {
@@ -104,7 +105,7 @@ namespace Velociraptor
                 //Update Text fields
                 MainThread.BeginInvokeOnMainThread(() =>
                 {
-                    Fragments.Fragment_text.UpdateGUI(location);
+                    Fragments.Fragment_Text.UpdateGUI(location);
                 });
             }
         }
@@ -254,7 +255,7 @@ namespace Velociraptor
 
             /**///Does not really belong here. Rehome this please
             //Zoom in on Map
-            Fragments.Fragment_map.GetMap().Navigator.ZoomToLevel(Fragment_Preferences.MaxZoom);
+            Fragments.Fragment_Map.GetMap().Navigator.ZoomToLevel(Fragment_Preferences.MaxZoom);
 
             if (intent.Action.Equals(Fragment_Preferences.ACTION_START_SERVICE))
             {

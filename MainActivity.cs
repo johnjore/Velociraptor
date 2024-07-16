@@ -83,8 +83,8 @@ namespace Velociraptor
                 Serilog.Log.Debug($"Load fragments");
                 SupportFragmentManager.BeginTransaction()
                     .SetReorderingAllowed(true)
-                    .Add(Resource.Id.fragment_container_map, new Fragment_map(), Fragment_Preferences.Fragment_Map)
-                    .Add(Resource.Id.fragment_container_text, new Fragment_text(), Fragment_Preferences.Fragment_Text)
+                    .Add(Resource.Id.fragment_container_map, new Fragment_Map(), Fragment_Preferences.Fragment_Map)
+                    .Add(Resource.Id.fragment_container_text, new Fragment_Text(), Fragment_Preferences.Fragment_Text)
                     .Commit();
             }
 

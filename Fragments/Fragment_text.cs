@@ -10,7 +10,7 @@ using Mapsui.UI;
 
 namespace Velociraptor.Fragments
 {
-    public class Fragment_text : AndroidX.Fragment.App.Fragment
+    public class Fragment_Text : AndroidX.Fragment.App.Fragment
     {
         // GUI
         private static TextView? txtlatitude = null;

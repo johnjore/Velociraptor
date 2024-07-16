@@ -7,6 +7,7 @@ using BruTile.Web;
 using SQLite;
 using Xamarin.Essentials;
 using Velociraptor.Models;
+using Velociraptor.Fragments;
 
 namespace Velociraptor
 {
@@ -144,7 +145,7 @@ namespace Velociraptor
                 }
             }
 
-            public byte[] Find(TileIndex index)
+            public byte[]? Find(TileIndex index)
             {
                 try
                 {

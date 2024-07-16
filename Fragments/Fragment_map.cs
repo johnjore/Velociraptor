@@ -14,7 +14,7 @@ using Mapsui.Tiling.Layers;
 
 namespace Velociraptor.Fragments
 {
-    public class Fragment_map : AndroidX.Fragment.App.Fragment
+    public class Fragment_Map : AndroidX.Fragment.App.Fragment
     {
         private static MapControl? mapControl = null;
         private static Mapsui.Map map = new();
