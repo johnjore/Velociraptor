@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:tag="Fragment_Text" >
+
+    <RelativeLayout
+        android:id="@+id/relativeLayout2" 
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" >
+
+        <TextView
+            android:text="@string/str_latitude"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/textView2" />
+
+        <TextView
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/textView2"
+            android:id="@+id/txtlatitude" />
+
+        <TextView
+            android:text="@string/str_longitude"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/txtlatitude"
+            android:id="@+id/textView3" />
+
+        <TextView
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/textView3"
+            android:id="@+id/txtlong" />
+
+        <TextView
+            android:text="@string/str_speed"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/txtlong"
+            android:id="@+id/textView7" />
+
+        <TextView
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/textView7"
+            android:id="@+id/txtspeed" />
+
+        <TextView
+            android:text="@string/str_GPSDateTime"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/txtspeed"
+            android:id="@+id/textView9" />
+
+        <TextView
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/textView9"
+            android:id="@+id/txtgpsdatetime" />
+
+        <TextView
+            android:text="@string/str_countryfile_name"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:id="@id/textView10" />
+
+        <TextView
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/textView10"
+            android:layout_alignLeft="@+id/textView5"
+            android:id="@+id/txtcountryname" />
+
+
+        <TextView
+            android:text="@string/str_street_name"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignLeft="@+id/textView10"
+            android:layout_below="@+id/txtcountryname"
+            android:id="@+id/textView5" />
+
+        <TextView
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/textView5"
+            android:layout_alignLeft="@+id/textView10"
+            android:id="@+id/txtstreetname" />
+
+        <TextView
+            android:text="@string/str_street_maxspeed"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignLeft="@+id/textView10"
+            android:layout_below="@+id/txtstreetname"
+            android:id="@+id/textView6" />
+
+        <TextView
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignLeft="@+id/textView10"
+            android:layout_below="@+id/textView6"
+            android:id="@+id/txtspeedlimit" />
+
+        <TextView
+            android:text="@string/str_lastupdated"
+            android:textAppearance="?android:attr/textAppearanceLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignLeft="@+id/textView10"
+            android:layout_below="@+id/txtspeedlimit"
+            android:id="@+id/textView11" />
+
+        <TextView
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignLeft="@+id/textView10"
+            android:layout_below="@+id/textView11"
+            android:id="@+id/txtlastupdated" />
+    </RelativeLayout>
+
+    <TextView
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:layout_width="match_parent"
+        android:layout_height="20dp"
+        android:layout_below="@+id/relativeLayout2"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="20dp"
+        android:id="@+id/txtspeeding" />
+</LinearLayout>

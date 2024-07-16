@@ -19,15 +19,12 @@ namespace Velociraptor
         {
             try
             {
-                if (mbTileCache == null)
-                {
-                    mbTileCache = new MbTileCache(cacheFilename, "png");
-                }
+                mbTileCache ??= new MbTileCache(cacheFilename, "png");
 
                 bool enableMobileData = Preferences.Get("UseMobileData", false);
                 if (enableMobileData)
                 {
-                    HttpTileSource src = new(new GlobalSphericalMercator(PrefsFragment.MinZoom, PrefsFragment.MaxZoom),
+                    HttpTileSource src = new(new GlobalSphericalMercator(Fragment_Preferences.MinZoom, Fragment_Preferences.MaxZoom),
                         "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", 
                         new[] { "a", "b", "c" }, 
                         name: "OpenStreetMap",
@@ -40,7 +37,7 @@ namespace Velociraptor
                 else
                 {
                     IRequest? request = null;
-                    HttpTileSource src = new(new GlobalSphericalMercator(PrefsFragment.MinZoom, PrefsFragment.MaxZoom), 
+                    HttpTileSource src = new(new GlobalSphericalMercator(Fragment_Preferences.MinZoom, Fragment_Preferences.MaxZoom), 
                         request,
                         name: "OpenStreetMap",
                         persistentCache: mbTileCache,
@@ -59,13 +56,13 @@ namespace Velociraptor
 
         public class MbTileCache : IPersistentCache<byte[]>, IDisposable
         {
-            public static List<MbTileCache> openConnections = new List<MbTileCache>();
+            public static List<MbTileCache>? openConnections = [];
             public static SQLiteConnection? sqlConn = null;
 
             public MbTileCache(string filename, string format)
             {
                 sqlConn = InitializeTileCache(filename, format);
-                openConnections.Add(this);
+                openConnections?.Add(this);
             }
 
             /// <summary>
@@ -83,7 +80,7 @@ namespace Velociraptor
             {
                 try
                 {
-                    tiles mbtile = new tiles
+                    tiles mbtile = new()
                     {
                         zoom_level = index.Level,
                         tile_column = index.Col,
@@ -147,7 +144,7 @@ namespace Velociraptor
                 }
             }
 
-            public byte[]? Find(TileIndex index)
+            public byte[] Find(TileIndex index)
             {
                 try
                 {
@@ -155,7 +152,7 @@ namespace Velociraptor
 
                     if (sqlConn == null)
                     {
-                        return null;
+                        return Array.Empty<byte>();
                     }
 
                     lock (sqlConn)
@@ -163,10 +160,10 @@ namespace Velociraptor
                         tiles oldTile = sqlConn.Table<tiles>().Where(x => x.zoom_level == index.Level && x.tile_column == index.Col && x.tile_row == rowNum).FirstOrDefault();
                         if (oldTile != null)
                         {
-                            /**///if ((DateTime.UtcNow - oldTile.createDate).TimeSpan.TotalDays >= PrefsFragment.OfflineMaxAge)
+                            /**///if ((DateTime.UtcNow - oldTile.createDate).TimeSpan.TotalDays >= Fragment_Preferences.OfflineMaxAge)
                             if (oldTile.tile_data == null)
                             {
-                                return null;
+                                return Array.Empty<byte>();
                             }
                             else
                             {
@@ -180,7 +177,7 @@ namespace Velociraptor
                     Serilog.Log.Error(ex, $"TileCache - Find()");
                 }
 
-                return null;
+                return Array.Empty<byte>();
             }
 
             public void Remove(TileIndex index)
@@ -212,9 +209,9 @@ namespace Velociraptor
                     new metadata { name = "format", value = format },
                     //SHOULD
                     new metadata { name = "bounds", value = "-180.0,-90.0,180.0,90.0" },                 //Whole world
-                    new metadata { name = "center", value = "0,0," + PrefsFragment.MinZoom.ToString() }, //Center of world
-                    new metadata { name = "minzoom", value = PrefsFragment.MinZoom.ToString() },
-                    new metadata { name = "maxzoom", value = PrefsFragment.MaxZoom.ToString() },
+                    new metadata { name = "center", value = "0,0," + Fragment_Preferences.MinZoom.ToString() }, //Center of world
+                    new metadata { name = "minzoom", value = Fragment_Preferences.MinZoom.ToString() },
+                    new metadata { name = "maxzoom", value = Fragment_Preferences.MaxZoom.ToString() },
                     //MAY
                     new metadata { name = "attribution", value = "(c) OpenStreetMap contributors https://www.openstreetmap.org/copyright" },
                     new metadata { name = "description", value = "Offline database for " + Platform.CurrentActivity?.Resources?.GetString(Resource.String.app_name) },

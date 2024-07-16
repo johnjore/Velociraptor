@@ -15,10 +15,13 @@ using System.Text;
 namespace Velociraptor
 {
     [Activity(Label = "settings")]
-    public class PrefsFragment : PreferenceFragmentCompat
+    public class Fragment_Preferences : PreferenceFragmentCompat
     {
         //Misc
         public readonly static string rootPath = System.Environment.GetFolderPath(System.Environment.SpecialFolder.Personal);
+        public const string Fragment_Map = "Fragment_Map";
+        public const string Fragment_Text = "Fragment_Text";
+        public const string Fragment_Settings = "Fragment_Settings";
 
         //Map
         public const string CacheDB = "CacheDB.mbtiles";    //Database to store offline tiles

@@ -11,6 +11,13 @@ namespace Velociraptor
 {
     internal class InitializeLocationData
     {
+        private static string countryName = null;
+
+        public static string GetCountryName()
+        {
+            return countryName;
+        }
+
         public static async Task InitializeOsmProvider()
         {
             Serilog.Log.Debug("InitializeOSMProvider() - Start");
@@ -29,15 +36,6 @@ namespace Velociraptor
                 return;
             }
 
-            if (UpdateScreen.txtcountryname is null)
-            {
-                Serilog.Log.Error($"txtcountryname is null. Returning");
-                return;
-            }
-
-            //Clear GUI field
-            UpdateScreen.txtcountryname.Text = String.Empty;
-
             var service = new CountryReverseGeocodeService();
             var gLocation = new GeoLocation { Latitude = cLocation.Latitude, Longitude = cLocation.Longitude };
             LocationInfo locationInfo = service.FindCountry(gLocation);
@@ -49,7 +47,8 @@ namespace Velociraptor
             }
 
             Serilog.Log.Information($"FindCountry: '{locationInfo.Name}'");
-            var countryName = locationInfo.Name.ToLower();
+            countryName = locationInfo.Name.ToLower();
+
 
             //RouterDB exists?
             var dbInfo = new FileInfo(FileSystem.AppDataDirectory + "/" + countryName + ".db");

@@ -23,7 +23,7 @@ namespace Velociraptor
             {
                 Serilog.Log.Debug($"BootBroadcastReceiver - ActionBootcompleted - Starting locationService");
                 Intent locationServiceIntent = new(context, typeof(LocationForegroundService));
-                locationServiceIntent.SetAction(PrefsFragment.ACTION_START_SERVICE);
+                locationServiceIntent.SetAction(Fragment_Preferences.ACTION_START_SERVICE);
                 if (OperatingSystem.IsAndroidVersionAtLeast(26))
                 {
                     context.StartForegroundService(locationServiceIntent);

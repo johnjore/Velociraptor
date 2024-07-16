@@ -24,10 +24,11 @@ using Serilog.Core;
 using Serilog.Sink.AppCenter;
 using TelegramSink;
 using Xamarin.Essentials;
+using Velociraptor.Fragments;
 
 namespace Velociraptor
 {
-    [Activity(Name = "no.johnjore.velociraptor.MainActivity", Label = "@string/app_name", Theme = "@style/AppTheme.NoActionBar", MainLauncher = true)]
+    [Activity(Name = "no.johnjore.velociraptor.MainActivity", Label = "@string/app_name", Theme = "@style/AppTheme.NoActionBar", MainLauncher = true )]
     public class MainActivity : AppCompatActivity, NavigationView.IOnNavigationItemSelectedListener
     {
         // Debugging
@@ -55,13 +56,20 @@ namespace Velociraptor
                 //.WriteTo.TeleSink(telegramApiKey: telegramApiKey, telegramChatId: telegramChatId)
                 .CreateLogger();
 
-            Xamarin.Essentials.Platform.Init(this, savedInstanceState);
             Serilog.Log.Debug($"MainActivity - OnCreate()");
+
+            Xamarin.Essentials.Platform.Init(this, savedInstanceState);
+
+            Serilog.Log.Debug($"Request all application permissions");
+            await AppPermissions.RequestAppPermissions(this);
+
+            Serilog.Log.Debug($"Notify user if location permission does not allow background collection");
+            await AppPermissions.LocationPermissionNotification(this);
 
             SetContentView(Resource.Layout.activity_main);
             AndroidX.AppCompat.Widget.Toolbar? toolbar = FindViewById<AndroidX.AppCompat.Widget.Toolbar>(Resource.Id.toolbar);
             SetSupportActionBar(toolbar);
-           
+
             DrawerLayout? drawer = FindViewById<DrawerLayout>(Resource.Id.drawer_layout);
             ActionBarDrawerToggle toggle = new(this, drawer, toolbar, Resource.String.navigation_drawer_open, Resource.String.navigation_drawer_close);
             drawer?.AddDrawerListener(toggle);
@@ -70,11 +78,15 @@ namespace Velociraptor
             NavigationView? navigationView = FindViewById<NavigationView>(Resource.Id.nav_view);
             navigationView?.SetNavigationItemSelectedListener(this);
 
-            Serilog.Log.Debug($"Request all application permissions");
-            await AppPermissions.RequestAppPermissions(this);
-
-            Serilog.Log.Debug($"Notify user if location permission does not allow background collection");
-            await AppPermissions.LocationPermissionNotification(this);
+            if (savedInstanceState == null)
+            {
+                Serilog.Log.Debug($"Load fragments");
+                SupportFragmentManager.BeginTransaction()
+                    .SetReorderingAllowed(true)
+                    .Add(Resource.Id.fragment_container_map, new Fragment_map(), Fragment_Preferences.Fragment_Map)
+                    .Add(Resource.Id.fragment_container_text, new Fragment_text(), Fragment_Preferences.Fragment_Text)
+                    .Commit();
+            }
 
             Serilog.Log.Debug($"MainActivity - Initilize OSM Provider");
             _ = InitializeLocationData.InitializeOsmProvider();
@@ -82,7 +94,7 @@ namespace Velociraptor
             //Location Service. Service checks if already running
             Serilog.Log.Debug($"MainActivity - Start LocationService");
             Intent locationServiceIntent = new(this, typeof(LocationForegroundService));
-            locationServiceIntent.SetAction(PrefsFragment.ACTION_START_SERVICE);
+            locationServiceIntent.SetAction(Fragment_Preferences.ACTION_START_SERVICE);
             if (OperatingSystem.IsAndroidVersionAtLeast(26))
             {
                 StartForegroundService(locationServiceIntent);
@@ -91,9 +103,6 @@ namespace Velociraptor
             {
                 StartService(locationServiceIntent);
             }
-
-            //Create/Initialize Map
-            Map.CreateMap();
 
             //Disable battery optimization
             BatteryOptimization.SetDozeOptimization(this);
@@ -118,9 +127,10 @@ namespace Velociraptor
             {
                 Serilog.Log.Information($"Change to Settings");
                 SetContentView(Resource.Layout.preferences);
-                var FragmentsTransaction = SupportFragmentManager.BeginTransaction();
-                FragmentsTransaction.Replace(Resource.Id.preference_container, new PrefsFragment());
-                FragmentsTransaction.Commit();
+                SupportFragmentManager.BeginTransaction()
+                    .Replace(Resource.Id.preference_container, new Fragment_Preferences(), Fragment_Preferences.Fragment_Settings)
+                    .AddToBackStack(null)
+                    .Commit();
 
                 return true;
             }
@@ -172,7 +182,7 @@ namespace Velociraptor
                 alert.SetPositiveButton(Resource.String.Yes, (sender, args) => {
                     //Location Service
                     Intent locationServiceIntent = new(this, typeof(LocationForegroundService));
-                    locationServiceIntent.SetAction(PrefsFragment.ACTION_STOP_SERVICE);
+                    locationServiceIntent.SetAction(Fragment_Preferences.ACTION_STOP_SERVICE);
                     StopService(locationServiceIntent);
 
                     Serilog.Log.CloseAndFlush();
